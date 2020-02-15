@@ -1,0 +1,25 @@
+{
+  "name": "@jrbarnard/simple-config",
+  "version": "1.0.0",
+  "description": "",
+  "main": "build/index.js",
+  "scripts": {
+    "build": "npm run clean && mkdir build && tsc",
+    "clean": "rm -rf build",
+    "lint": "tslint",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "private": true,
+  "dependencies": {
+    "ajv": "^6.11.0",
+    "lodash": "^4.17.15"
+  },
+  "devDependencies": {
+    "@types/node": "^13.7.1",
+    "tslint": "^6.0.0",
+    "tslint-config-prettier": "^1.18.0",
+    "typescript": "^3.7.5"
+  }
+}
