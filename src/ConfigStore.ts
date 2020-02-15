@@ -1,6 +1,6 @@
 import { ConfigSchema, ILogger, IConfigStoreOptions, IConfigLoader, IConfigSchemaObj, IConfigValidator } from './types';
 import { ConfigValue } from './ConfigValue';
-import { InvalidSchemaError } from './errors';
+import { InvalidSchemaError, KeyLoadingError } from './errors';
 
 interface IConfigStoreStore {
   [k: string]: ConfigStore | ConfigValue;
@@ -107,6 +107,15 @@ export class ConfigStore {
       await this.validator.validate(keySchema, value);
       storeKeyValue.setValue(value);
     } catch (e) {
+      // Ignore certain errors and fallback to default (if exists)
+      const errorsToIgnore = [
+        KeyLoadingError,
+        InvalidSchemaError
+      ];
+      if (!errorsToIgnore.includes(e.constructor)) {
+        throw e;
+      }
+
       // If no external source / failed to get from external source but has a default value then resolve that
       if (!hasDefault) {
         throw e;
