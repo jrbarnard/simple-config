@@ -1,4 +1,4 @@
-import { IConfigOptions, ILogger, ConfigSchema, IFlattenedKeys, Source } from './types';
+import { IConfigOptions, ILogger, ConfigSchema, IFlattenedKeys, Source, ILoader, ILoaderResolver } from './types';
 import { ConfigLoader } from './utils/ConfigLoader';
 import { Logger } from './utils/Logger';
 import { SchemaNotFoundError, UninitialisedError, UndefinedConfigKeyError } from './errors';
@@ -16,18 +16,25 @@ export class Config<T> {
   private schema!: ConfigSchema<T>;
   private flattenedKeys: IFlattenedKeys = {};
   private store!: ConfigStore;
+  private loaderResolver: ILoaderResolver;
 
   constructor(options: IConfigOptions = {}) {
     this.logger = options.logger ?? new Logger();
 
+    this.loaderResolver = options.loaderResolver ?? new LoaderResolver<T>({
+      logger: this.logger.spawn('LoaderResolver'),
+      loaders: {
+        // Default loaders
+        [Source.Environment]: EnvironmentLoader,
+        [Source.SSM]: SSMLoader
+      },
+      // Pass through config so the resolver can use our defined config
+      config: this,
+    });
     this.configLoader = new ConfigLoader({
       logger: this.logger.spawn('ConfigLoader'),
       directory: options.configDirectory,
-      // TODO: Improve the loaders so can be set externally
-      loaderResolver: options.loaderResolver ?? new LoaderResolver({
-        [Source.Environment]: new EnvironmentLoader(),
-        [Source.SSM]: new SSMLoader()
-      })
+      loaderResolver: this.loaderResolver
     });
     this.configValidator = new ConfigValidator({
       logger: this.logger.spawn('ConfigValidator'),
@@ -162,8 +169,12 @@ export class Config<T> {
    * Get the value for the schema
    * @param key 
    */
-  public async get<C>(key: string): Promise<C> {
+  public async get<C>(key: string, defaultValue?: any): Promise<C> {
     if (!this.has(key)) {
+      if (defaultValue !== undefined) {
+        return defaultValue;
+      }
+
       throw new UndefinedConfigKeyError(key);
     }
 
@@ -194,5 +205,15 @@ export class Config<T> {
     }
 
     return flattenedKeyValue.getValue() as Promise<C>;
+  }
+
+  /**
+   * Pass through method to add aloader on the resolver
+   *
+   * @param key 
+   * @param loader 
+   */
+  addLoader(key: string, loader: ILoader): void {
+    this.loaderResolver.addLoader(key, loader);
   }
 }

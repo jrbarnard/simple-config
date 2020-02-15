@@ -1,5 +1,8 @@
 import { ILogger } from '../types';
 
+/**
+ * TODO: Improve to handle logging a full error if we can
+ */
 export class Logger implements ILogger {
   private namespace: string;
   private parent: ILogger;

@@ -27,8 +27,8 @@ export class ConfigLoader implements IConfigLoader {
    * @param source 
    * @param key 
    */
-  public async loadFromSource(source: Source, key: string): Promise<any> {
-    const loader = this.loaderResolver.resolve(source);
+  public async loadFromSource(source: string, key: string): Promise<any> {
+    const loader = await this.loaderResolver.resolve(source);
     return loader.load(key);
   }
 

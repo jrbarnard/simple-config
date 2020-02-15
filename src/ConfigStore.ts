@@ -25,6 +25,10 @@ export class ConfigStore {
     this.generateFromSchema(this.schema);
   }
 
+  /**
+   * Generates the store tree from the passed schema
+   * @param schema 
+   */
   private generateFromSchema(schema: ConfigSchema<any>) {
     const store: any = {};
 
@@ -54,6 +58,7 @@ export class ConfigStore {
 
   /**
    * Cleans up the store value into an object literal
+   * If some of the values haven't yet been retrieved it will retrieve them
    */
   public async getValue(): Promise<any> {
     const mapped: IMappedStore = {};
@@ -78,6 +83,7 @@ export class ConfigStore {
       throw new Error(`Key (${key}) does not exist in store`);
     }
 
+    // If key specified is a sub store then get the full set of values
     const storeKeyValue = this.store[key];
     if (storeKeyValue instanceof ConfigStore) {
       return storeKeyValue.getValue();
@@ -92,8 +98,8 @@ export class ConfigStore {
     const keySchema = this.schema[key] as IConfigSchemaObj;
     const src = keySchema._source;
     const srcKey = keySchema._key ?? key;
-    const hasDefault = storeKeyValue.hasBeenDefaultSet();
 
+    let value: any;
     try {
       if (!src || !srcKey) {
         throw new InvalidSchemaError(
@@ -102,31 +108,30 @@ export class ConfigStore {
       }
 
       // Load, validate and set the value from the external source
-      const value = await this.loader.loadFromSource(src, srcKey);
+      value = await this.loader.loadFromSource(src, srcKey);
       this.logger.debug(`Loaded key (${srcKey}) from source`);
       await this.validator.validate(keySchema, value);
-      storeKeyValue.setValue(value);
     } catch (e) {
-      // Ignore certain errors and fallback to default (if exists)
       const errorsToIgnore = [
         KeyLoadingError,
         InvalidSchemaError
       ];
-      if (!errorsToIgnore.includes(e.constructor)) {
+      // Ignore certain errors and fallback to default (if exists)
+      if (!storeKeyValue.hasBeenDefaultSet() || !errorsToIgnore.includes(e.constructor)) {
         throw e;
       }
 
-      // If no external source / failed to get from external source but has a default value then resolve that
-      if (!hasDefault) {
-        throw e;
-      }
-      
-      storeKeyValue.setValue(storeKeyValue.getValue());
+      value = storeKeyValue.getValue();
     }
 
+    storeKeyValue.setValue(value);
     return storeKeyValue.getValue();
   }
 
+  /**
+   * Run a callback on each entry in the store
+   * @param callback 
+   */
   public each(callback: (key: string, value: ConfigStore | ConfigValue) => void) {
     for (const key in this.store) {
       if (!this.store.hasOwnProperty(key)) {
