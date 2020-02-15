@@ -65,6 +65,25 @@ export class ConfigValidator implements IConfigValidator {
     return properties;
   }
 
+  public cast(schema: IConfigSchemaObj, value: any): any {
+    switch (schema._type) {
+      case String:
+        return String(value);
+      case Number:
+        return Number(value);
+      case Boolean:
+        const flaseyValues = [
+          'false',
+          '0',
+          0,
+          false
+        ];
+        return !flaseyValues.includes(value);
+    }
+
+    return value;
+  }
+
   public async validate(schema: IConfigSchemaObj, value: any): Promise<boolean> {
     const jsonSchema: any = {
       type: this.getType(schema),

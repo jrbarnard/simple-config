@@ -84,13 +84,9 @@ export class ConfigStore {
     }
 
     // If key specified is a sub store then get the full set of values
-    const storeKeyValue = this.store[key];
-    if (storeKeyValue instanceof ConfigStore) {
-      return storeKeyValue.getValue();
-    }
-
-    if (storeKeyValue.hasBeenSet()) {
-      return storeKeyValue.getValue();
+    const configValue = this.store[key];
+    if (configValue instanceof ConfigStore || configValue.hasBeenSet()) {
+      return configValue.getValue();
     }
 
     this.logger.debug(`No value loaded for ${key}, loading...`);
@@ -99,33 +95,37 @@ export class ConfigStore {
     const src = keySchema._source;
     const srcKey = keySchema._key ?? key;
 
-    let value: any;
-    try {
-      if (!src || !srcKey) {
-        throw new InvalidSchemaError(
-          `No _src & _key specified for key: ${key}, either specify a default, use environment files or define the _src & _key.`
-        );
+    if (!src || !srcKey) {
+      if (configValue.hasDefaultBeenSet()) {
+        return configValue.getValue();
       }
 
+      throw new InvalidSchemaError(
+        `No _src & _key specified for key: ${key}, either specify a default, use environment files or define the _src & _key.`
+      );
+    }
+
+    let value: any;
+    try {
       // Load, validate and set the value from the external source
       value = await this.loader.loadFromSource(src, srcKey);
       this.logger.debug(`Loaded key (${srcKey}) from source`);
+      value = this.validator.cast(keySchema, value);
       await this.validator.validate(keySchema, value);
     } catch (e) {
       const errorsToIgnore = [
         KeyLoadingError,
-        InvalidSchemaError
       ];
       // Ignore certain errors and fallback to default (if exists)
-      if (!storeKeyValue.hasBeenDefaultSet() || !errorsToIgnore.includes(e.constructor)) {
+      if (!configValue.hasDefaultBeenSet() || !errorsToIgnore.includes(e.constructor)) {
         throw e;
       }
 
-      value = storeKeyValue.getValue();
+      value = configValue.getValue();
     }
 
-    storeKeyValue.setValue(value);
-    return storeKeyValue.getValue();
+    configValue.setValue(value);
+    return value;
   }
 
   /**

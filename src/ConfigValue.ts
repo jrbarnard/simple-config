@@ -1,7 +1,7 @@
 export class ConfigValue {
   private value: any = undefined;
   private isSet: boolean = false;
-  private isSetDefault: boolean = false;
+  private isDefaultSet: boolean = false;
 
   public getValue(): any {
     return this.value;
@@ -13,7 +13,7 @@ export class ConfigValue {
   }
 
   public setDefault(value: any) {
-    this.isSetDefault = true;
+    this.isDefaultSet = true;
     this.value = value;
   }
 
@@ -26,7 +26,7 @@ export class ConfigValue {
    * E.g if loaded by schema _default, then overridden by a prod.json file
    * But if the source is set as Source.Environment then we should still override
    */
-  public hasBeenDefaultSet(): boolean {
-    return this.isSetDefault;
+  public hasDefaultBeenSet(): boolean {
+    return this.isDefaultSet;
   }
 }
