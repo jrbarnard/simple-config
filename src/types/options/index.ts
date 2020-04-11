@@ -1,6 +1,6 @@
 export { IConfigLoaderOptions } from './IConfigLoaderOptions';
 export { IConfigValidatorOptions } from './IConfigValidatorOptions';
 export { IConfigStoreOptions } from './IConfigStoreOptions';
-export { ILoaderResolverOptions } from './ILoaderResolverOptions';
+export { IResolverOptions } from './IResolverOptions';
 export { IConfigOptions } from './IConfigOptions';
 export { IExpectsLoggerOptions } from './IExpectsLoggerOptions';

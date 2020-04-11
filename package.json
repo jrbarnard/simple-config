@@ -7,7 +7,7 @@
     "build": "npm run clean && mkdir build && tsc -p tsconfig.build.json",
     "clean": "rm -rf build",
     "lint": "tslint",
-    "test": "jest test/ --"
+    "test": "jest test/**/*"
   },
   "author": "",
   "license": "ISC",

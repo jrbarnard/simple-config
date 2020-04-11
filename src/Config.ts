@@ -1,11 +1,11 @@
-import { Options, ILogger, ConfigSchema, IFlattenedKeys, Source, ILoader, ILoaderResolver } from './types';
+import { Options, ILogger, ConfigSchema, IFlattenedKeys, Source, ILoader, IResolver } from './types';
 import { ConfigLoader } from './utils/ConfigLoader';
 import { Logger } from './utils/Logger';
 import { SchemaNotFoundError, UninitialisedError, UndefinedConfigKeyError } from './errors';
 import { ConfigValidator } from './utils/ConfigValidator';
 import { ConfigValue } from './ConfigValue';
 import { ConfigStore } from './ConfigStore';
-import { LoaderResolver } from './utils/LoaderResolver';
+import { Resolver } from './utils/Resolver';
 import { EnvironmentLoader } from './loaders/EnvironmentLoader';
 import { SSMLoader } from './loaders/SSMLoader';
 
@@ -16,14 +16,14 @@ export class Config<T> {
   private schema!: ConfigSchema<T>;
   private flattenedKeys: IFlattenedKeys = {};
   private store!: ConfigStore;
-  private loaderResolver: ILoaderResolver;
+  private loaderResolver: IResolver<ILoader>;
 
   constructor(options: Options.IConfigOptions = {}) {
     this.logger = options.logger ?? new Logger();
 
-    this.loaderResolver = options.loaderResolver ?? new LoaderResolver({
+    this.loaderResolver = options.loaderResolver ?? new Resolver<ILoader>({
       logger: this.logger.spawn('LoaderResolver'),
-      loaders: {
+      registered: {
         // Default loaders
         [Source.Environment]: EnvironmentLoader,
         [Source.SSM]: SSMLoader
@@ -217,6 +217,6 @@ export class Config<T> {
    * @param loader 
    */
   addLoader(key: string, loader: ILoader): void {
-    this.loaderResolver.addLoader(key, loader);
+    this.loaderResolver.add(key, loader);
   }
 }
