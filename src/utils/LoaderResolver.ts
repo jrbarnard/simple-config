@@ -1,21 +1,20 @@
-import { ILoaderResolver, ILoader, ILoaderResolverOptions, ILoaders, ILogger, ILoaderConstructors } from '../types';
+import { ILoaderResolver, ILoader, Options, ILoaders, ILogger, ILoaderConstructors, Loaders } from '../types';
 import { InvalidLoaderError } from '../errors';
-import { Config } from '../Config';
 
 /**
  * Class to resolve loader classes, either from constructors (and inject config)
  * Or from class instances added through addLoader()
  */
-export class LoaderResolver<T> implements ILoaderResolver {
+export class LoaderResolver implements ILoaderResolver {
   private loaders: ILoaders = {};
   private loaderConfig: ILoaderConstructors = {};
   private logger: ILogger;
-  private config: Config<T>;
+  private configRetriever: Loaders.IConfigRetriever;
 
-  constructor(options: ILoaderResolverOptions<T>) {
+  constructor(options: Options.ILoaderResolverOptions) {
     this.loaderConfig = options.loaders;
     this.logger = options.logger;
-    this.config = options.config;
+    this.configRetriever = options.configRetriever;
   }
 
   /**
@@ -24,7 +23,7 @@ export class LoaderResolver<T> implements ILoaderResolver {
    */
   public async resolve(loader: string): Promise<ILoader> {
     if (!this.loaders[loader]) {
-      // If not yet loaded but we don't have the config to cofigure it then it's invalid
+      // If not yet loaded but we don't have the config to configure it then it's invalid
       if (!(loader in this.loaderConfig)) {
         throw new InvalidLoaderError(loader);
       }
@@ -34,7 +33,7 @@ export class LoaderResolver<T> implements ILoaderResolver {
       // Always pass through a logger
       this.loaders[loader] = new this.loaderConfig[loader]({
         logger: this.logger.spawn(`Loader.${loader}`),
-        ...await this.config.get<any>(`loaders.${loader}`, {})
+        ...await this.configRetriever(loader)
       });
     }
 

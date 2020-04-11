@@ -1,11 +1,11 @@
-import { IConfigValidatorOptions, ILogger, ConfigSchema, IConfigSchemaObj, IConfigValidator } from '../types';
+import { Options, ILogger, ConfigSchema, IConfigSchemaObj, IConfigValidator } from '../types';
 import Ajv from 'ajv';
 import { InvalidSchemaError } from '../errors';
 
 export class ConfigValidator implements IConfigValidator {
   private logger: ILogger;
   private ajv: Ajv.Ajv;
-  constructor(options: IConfigValidatorOptions) {
+  constructor(options: Options.IConfigValidatorOptions) {
     this.logger = options.logger;
     this.ajv = new Ajv();
   }

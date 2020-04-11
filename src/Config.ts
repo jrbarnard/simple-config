@@ -1,4 +1,4 @@
-import { IConfigOptions, ILogger, ConfigSchema, IFlattenedKeys, Source, ILoader, ILoaderResolver } from './types';
+import { Options, ILogger, ConfigSchema, IFlattenedKeys, Source, ILoader, ILoaderResolver } from './types';
 import { ConfigLoader } from './utils/ConfigLoader';
 import { Logger } from './utils/Logger';
 import { SchemaNotFoundError, UninitialisedError, UndefinedConfigKeyError } from './errors';
@@ -18,18 +18,20 @@ export class Config<T> {
   private store!: ConfigStore;
   private loaderResolver: ILoaderResolver;
 
-  constructor(options: IConfigOptions = {}) {
+  constructor(options: Options.IConfigOptions = {}) {
     this.logger = options.logger ?? new Logger();
 
-    this.loaderResolver = options.loaderResolver ?? new LoaderResolver<T>({
+    this.loaderResolver = options.loaderResolver ?? new LoaderResolver({
       logger: this.logger.spawn('LoaderResolver'),
       loaders: {
         // Default loaders
         [Source.Environment]: EnvironmentLoader,
         [Source.SSM]: SSMLoader
       },
-      // Pass through config so the resolver can use our defined config
-      config: this,
+      // Pass through a retrieval function so the loader can resolve it's own config
+      configRetriever: async (loader: string) => {
+        return this.get(`loaders.${loader}`, {})
+      },
     });
     this.configLoader = new ConfigLoader({
       logger: this.logger.spawn('ConfigLoader'),
@@ -167,6 +169,7 @@ export class Config<T> {
 
   /**
    * Get the value for the schema
+   * TODO: Convert to 2 methods with type override
    * @param key 
    */
   public async get<C>(key: string, defaultValue?: any): Promise<C> {

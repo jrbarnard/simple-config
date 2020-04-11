@@ -4,10 +4,10 @@
   "description": "",
   "main": "build/index.js",
   "scripts": {
-    "build": "npm run clean && mkdir build && tsc",
+    "build": "npm run clean && mkdir build && tsc -p tsconfig.build.json",
     "clean": "rm -rf build",
     "lint": "tslint",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "jest test/ --"
   },
   "author": "",
   "license": "ISC",
@@ -17,7 +17,10 @@
     "lodash": "^4.17.15"
   },
   "devDependencies": {
+    "@types/jest": "^25.2.1",
     "@types/node": "^13.7.1",
+    "jest": "^25.3.0",
+    "ts-jest": "^25.3.1",
     "tslint": "^6.0.0",
     "tslint-config-prettier": "^1.18.0",
     "typescript": "^3.7.5"

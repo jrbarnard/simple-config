@@ -1,5 +1,5 @@
-export interface ILoader {
-  load(key: string): Promise<any>;
+export interface ILoader<T = any> {
+  load(key: string): Promise<T>;
 }
 
 export interface ILoaders {

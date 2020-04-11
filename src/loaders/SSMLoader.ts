@@ -1,9 +1,8 @@
-import { ILoader, ILogger } from '../types';
+import { ILoader, ILogger, Options, Loaders } from '../types';
 import { KeyLoadingError } from '../errors';
 
-interface ISSMLoaderOptions {
-  region?: string;
-  logger: ILogger;
+interface ISSMLoaderOptions extends Loaders.ISSMLoaderConfigurableOptions, Options.IExpectsLoggerOptions {
+  //
 }
 
 /**

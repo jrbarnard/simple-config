@@ -1,4 +1,4 @@
-import { ConfigSchema, ILogger, IConfigStoreOptions, IConfigLoader, IConfigSchemaObj, IConfigValidator } from './types';
+import { ConfigSchema, ILogger, Options, IConfigLoader, IConfigSchemaObj, IConfigValidator } from './types';
 import { ConfigValue } from './ConfigValue';
 import { InvalidSchemaError, KeyLoadingError } from './errors';
 
@@ -17,7 +17,7 @@ export class ConfigStore {
   private loader: IConfigLoader;
   private validator: IConfigValidator;
 
-  constructor(options: IConfigStoreOptions) {
+  constructor(options: Options.IConfigStoreOptions) {
     this.logger = options.logger;
     this.schema = options.schema;
     this.loader = options.loader;

@@ -1,8 +1,8 @@
 import { IExpectsLoggerOptions } from './IExpectsLoggerOptions';
 import { ILoaderConstructors } from '../ILoader';
-import { Config } from '../../Config';
+import { IConfigRetriever } from '../loaders';
 
-export interface ILoaderResolverOptions<T> extends IExpectsLoggerOptions {
+export interface ILoaderResolverOptions extends IExpectsLoggerOptions {
   loaders: ILoaderConstructors;
-  config: Config<T>;
+  configRetriever: IConfigRetriever;
 }
