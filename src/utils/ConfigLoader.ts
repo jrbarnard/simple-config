@@ -1,12 +1,12 @@
 import * as fs from 'fs';
 import { promisify } from 'util';
-import { Options, ILogger, ILoaderResolver, IConfigLoader } from '../types';
+import { Options, ILogger, IConfigLoader, IResolver, ILoader } from '../types';
 import { SchemaNotFoundError, InvalidSchemaError } from '../errors';
 
 export class ConfigLoader implements IConfigLoader {
   private logger: ILogger;
   private directory: string = 'config';
-  private loaderResolver: ILoaderResolver;
+  private loaderResolver: IResolver<ILoader>;
 
   constructor(options: Options.IConfigLoaderOptions) {
     this.logger = options.logger;

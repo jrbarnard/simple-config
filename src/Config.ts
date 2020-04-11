@@ -17,9 +17,11 @@ export class Config<T> {
   private flattenedKeys: IFlattenedKeys = {};
   private store!: ConfigStore;
   private loaderResolver: IResolver<ILoader>;
+  private environment?: string | undefined;
 
   constructor(options: Options.IConfigOptions = {}) {
     this.logger = options.logger ?? new Logger();
+    this.environment = options.environment ?? process.env.NODE_ENV;
 
     this.loaderResolver = options.loaderResolver ?? new Resolver<ILoader>({
       logger: this.logger.spawn('LoaderResolver'),
@@ -43,8 +45,8 @@ export class Config<T> {
     });
   }
 
-  private getEnvironment(): string {
-    return process.env.NODE_ENV ?? 'dev';
+  private getEnvironment(): string | undefined {
+    return this.environment;
   }
 
   public isInitialised(): boolean {
@@ -169,10 +171,9 @@ export class Config<T> {
 
   /**
    * Get the value for the schema
-   * TODO: Convert to 2 methods with type override
    * @param key 
    */
-  public async get<C>(key: string, defaultValue?: any): Promise<C> {
+  public async get<C>(key: string, defaultValue?: C): Promise<C> {
     if (!this.has(key)) {
       if (defaultValue !== undefined) {
         return defaultValue;
@@ -207,7 +208,7 @@ export class Config<T> {
       return store.getValueForKey(lastSegment);
     }
 
-    return flattenedKeyValue.getValue() as Promise<C>;
+    return flattenedKeyValue.getValue();
   }
 
   /**

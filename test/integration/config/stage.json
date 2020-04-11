@@ -1,0 +1,13 @@
+{
+  "db": {
+    "port": 2222,
+    "nested": {
+      "test": "stage override"
+    }
+  },
+  "services": {
+    "facebook": {
+      "apiKey": "stage override key"
+    }
+  }
+}

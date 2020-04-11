@@ -1,7 +1,8 @@
 import { IExpectsLoggerOptions } from './IExpectsLoggerOptions';
-import { ILoaderResolver } from '../ILoaderResolver';
+import { IResolver } from '../IResolver';
+import { ILoader } from '../ILoader';
 
 export interface IConfigLoaderOptions extends IExpectsLoggerOptions {
   directory?: string;
-  loaderResolver: ILoaderResolver;
+  loaderResolver: IResolver<ILoader>;
 }

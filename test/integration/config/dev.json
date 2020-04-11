@@ -1,0 +1,14 @@
+{
+  "db": {
+    "port": 1111,
+    "password": "localtesting",
+    "nested": {
+      "test": "dev override"
+    }
+  },
+  "services": {
+    "facebook": {
+      "apiKey": "dev override key"
+    }
+  }
+}

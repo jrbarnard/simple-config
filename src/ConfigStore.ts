@@ -113,11 +113,8 @@ export class ConfigStore {
       value = this.validator.cast(keySchema, value);
       await this.validator.validate(keySchema, value);
     } catch (e) {
-      const errorsToIgnore = [
-        KeyLoadingError,
-      ];
-      // Ignore certain errors and fallback to default (if exists)
-      if (!configValue.hasDefaultBeenSet() || !errorsToIgnore.includes(e.constructor)) {
+      // If we couldn't load the key, fallback gracefully to the default
+      if (e instanceof KeyLoadingError && !configValue.hasDefaultBeenSet()) {
         throw e;
       }
 
