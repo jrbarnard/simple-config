@@ -1,7 +1,7 @@
 // TODO:
 // Loads defaults from files based on environment
 // Overrides with source based config
-// Will load async on deman
+// Will load async on demand
 // Will validate config & throw if invalid
 // Custom loaders
 

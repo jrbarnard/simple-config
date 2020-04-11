@@ -1,12 +1,12 @@
 type Type = StringConstructor | NumberConstructor | BooleanConstructor;
 
-export interface IConfigSchemaObj {
+export interface IConfigSchemaObj<T> {
   _type: Type;
-  _default?: string | number | boolean;
+  _default?: T;
   _source?: string;
   _key?: string;
 }
 
 export type ConfigSchema<T> = {
-  [P in keyof T]: ConfigSchema<T[P]> | IConfigSchemaObj;
+  [P in keyof T]: ConfigSchema<T[P]> | IConfigSchemaObj<T[P]>;
 }
