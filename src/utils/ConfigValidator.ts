@@ -1,16 +1,19 @@
 import { Options, ILogger, ConfigSchema, IConfigSchemaObj, IConfigValidator } from '../types';
 import Ajv from 'ajv';
-import { InvalidSchemaError } from '../errors';
+import { SchemaValidationError, InvalidSchemaError } from '../errors';
 import { isConfigSchemaObject } from '../utils/guards';
+import { ConfigSchemaValue } from '../types/ConfigSchema';
+
+interface ISchemaProperty {
+  type: string;
+  properties?: ISchemaProperties;
+}
 
 /**
  * The schema type once converted to json schema for validation
  */
 interface ISchemaProperties {
-  [k: string]: {
-    type: string;
-    properties?: ISchemaProperties;
-  };
+  [k: string]: ISchemaProperty;
 }
 
 /**
@@ -54,6 +57,31 @@ export class ConfigValidator implements IConfigValidator {
   }
 
   /**
+   * Gets a single schema object json schema property object
+   * @param schemaValue 
+   */
+  private getSchemaProperty<T>(schemaValue: ConfigSchemaValue<T>): ISchemaProperty {
+    const properties: ISchemaProperty = {
+      type: 'object',
+    };
+
+    if (typeof schemaValue !== 'object') {
+      throw new InvalidSchemaError(`Schema should be an object`);
+    }
+
+    // Check if we are defining the type
+    // Otherwise it's a nested object
+    if (isConfigSchemaObject(schemaValue)) {
+      properties.type = this.getType(schemaValue);
+    } else {
+      // Recursively build properties
+      properties.properties = this.getSchemaProperties(schemaValue);
+    }
+
+    return properties;
+  }
+
+  /**
    * Get the json schema properties for the config schema
    * @param schema 
    */
@@ -64,27 +92,7 @@ export class ConfigValidator implements IConfigValidator {
         continue;
       }
 
-      properties[key] = {
-        type: 'object',
-      };
-
-      let type: string;
-      if (typeof schema[key] !== 'object') {
-        this.logger.info(`Schema under ${key} should be an object`);
-        throw new InvalidSchemaError(`Schema under ${key} should be an object`);
-      }
-
-      // Check if we are defining the type
-      // Otherwise it's a nested object
-      const schemaValue = schema[key];
-      if (isConfigSchemaObject(schemaValue)) {
-        type = this.getType(schemaValue);
-      } else {
-        // Recursively build properties
-        properties[key].properties = this.getSchemaProperties(schema[key] as ConfigSchema<T[keyof T]>);
-      }
-
-      properties[key].type = type;
+      properties[key] = this.getSchemaProperty(schema[key]);
     }
 
     return properties;
@@ -95,7 +103,7 @@ export class ConfigValidator implements IConfigValidator {
    * @param schema 
    * @param value 
    */
-  public cast<T>(schema: IConfigSchemaObj<T>, value: T): any {
+  public cast<T>(schema: IConfigSchemaObj<T>, value: any): any {
     switch (schema._type) {
       case String:
         return String(value);
@@ -114,18 +122,29 @@ export class ConfigValidator implements IConfigValidator {
     return value;
   }
 
+  private runAdditionalValidation(schema: ISchemaProperty, value: any): boolean {
+    if (schema.type === 'number') {
+      // Do not allow NaN
+      if (isNaN(value)) {
+        return false;
+      }
+    }
+
+    return true;
+  }
+
   /**
    * Validate a specific value against it's schema
    * @param schema
    * @param value
    */
   public async validate<T>(schema: IConfigSchemaObj<T>, value: T): Promise<boolean> {
-    const jsonSchema = this.getSchemaProperties(schema);
+    const jsonSchema = this.getSchemaProperty(schema);
 
     const test = this.ajv.compile(jsonSchema);
     
-    if (!test(value)) {
-      throw new InvalidSchemaError('Value failed validation', test.errors);
+    if (!test(value) || !this.runAdditionalValidation(jsonSchema, value)) {
+      throw new SchemaValidationError('Value failed validation', test.errors);
     }
 
     return true;
@@ -150,7 +169,7 @@ export class ConfigValidator implements IConfigValidator {
 
     if (!isValid) {
       this.logger.info(`Failed validation: ${JSON.stringify(test.errors)}`);
-      throw new InvalidSchemaError('Config failed validation', test.errors);
+      throw new SchemaValidationError('Config failed validation', test.errors);
     }
     
     return true;

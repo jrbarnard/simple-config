@@ -4,3 +4,4 @@ export { UndefinedConfigKeyError } from './UndefinedConfigKeyError';
 export { UninitialisedError } from './UninitialisedError';
 export { KeyLoadingError } from './KeyLoadingError';
 export { InvalidResolvableError } from './InvalidResolvableError';
+export { SchemaValidationError } from './SchemaValidationError';

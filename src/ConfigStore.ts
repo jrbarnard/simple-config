@@ -1,6 +1,7 @@
 import { ConfigSchema, ILogger, Options, IConfigLoader, IConfigSchemaObj, IConfigValidator } from './types';
 import { ConfigValue } from './ConfigValue';
 import { InvalidSchemaError, KeyLoadingError } from './errors';
+import { isConfigSchemaObject } from './utils/guards';
 
 interface IConfigStoreStore {
   [k: string]: ConfigStore | ConfigValue;
@@ -38,9 +39,12 @@ export class ConfigStore {
       }
 
       let value: ConfigValue | ConfigStore;
-      if ('_type' in schema[key]) {
+      if (isConfigSchemaObject(schema[key])) {
         value = new ConfigValue();
-        value.setDefault(schema[key]._default);
+
+        if ('_default' in schema[key]) {
+          value.setDefault(schema[key]._default);
+        }
       } else {
         value = new ConfigStore({
           schema: schema[key] as ConfigSchema<any>,
@@ -114,7 +118,7 @@ export class ConfigStore {
       await this.validator.validate(keySchema, value);
     } catch (e) {
       // If we couldn't load the key, fallback gracefully to the default
-      if (e instanceof KeyLoadingError && !configValue.hasDefaultBeenSet()) {
+      if (!(e instanceof KeyLoadingError) || !configValue.hasDefaultBeenSet()) {
         throw e;
       }
 
