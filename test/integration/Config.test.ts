@@ -88,12 +88,14 @@ const schema: ConfigSchema<ITestConfigSchema> = {
   }
 };
 
+const configDirectory = 'test/integration/config';
+
 describe('Config', () => {
   describe('When environment passed', () => {
     it('Will set the values found in environment files', async () => {
       let config = new Config<ITestConfigSchema>({
         environment: 'dev',
-        configDirectory: 'test/integration/config'
+        configDirectory
       });
       await config.initialise(schema);
 
@@ -106,16 +108,18 @@ describe('Config', () => {
           test: 'dev override', // Overridden in dev.json
         },
       });
+      await expect(config.get('services.facebook.apiKey')).resolves.toEqual('dev override key');
 
       // As no password in stage, if we try to load it will fail, so we need to set in process.env
       process.env.DB_PASSWORD = 'PROCESS_PASSWORD';
       config = new Config<ITestConfigSchema>({
         environment: 'stage',
-        configDirectory: 'test/integration/config'
+        configDirectory
       });
       await config.initialise(schema);
 
       result = await config.get('db');
+      delete process.env.DB_PASSWORD;
       expect(result).toEqual({
         host: 'localhost', // From default in schema
         password: 'PROCESS_PASSWORD', // Not set in stage
@@ -124,6 +128,32 @@ describe('Config', () => {
           test: 'stage override', // Overridden in stage.json
         },
       });
+      await expect(config.get('services.facebook.apiKey')).resolves.toEqual('stage override key');
+    });
+  });
+  describe('When environment not passed', () => {
+    it('Will get just the defaults', async () => {
+      // Defaults to NODE_ENV, verify is test
+      expect(process.env.NODE_ENV).toEqual('test');
+      const config = new Config<ITestConfigSchema>({
+        configDirectory
+      });
+      await config.initialise(schema);
+
+      await expect(config.get('db.nested.test')).resolves.toEqual('hello world');
+    });
+  });
+  describe.only('When value not set and does not meet validation', () => {
+    beforeEach(() => {
+      delete process.env.DB_PASSWORD;
+    });
+    it('Will throw an error', async () => {
+      const config = new Config<ITestConfigSchema>({
+        configDirectory
+      });
+      await config.initialise(schema);
+
+      await expect(config.get('db.password')).rejects.toThrow(Error);
     });
   });
 });

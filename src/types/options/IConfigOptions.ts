@@ -1,9 +1,10 @@
 import { ILogger } from '../ILogger';
-import { ILoaderResolver } from '../ILoaderResolver';
+import { IResolver } from '../IResolver';
+import { ILoader } from '../ILoader';
 
 export interface IConfigOptions {
   configDirectory?: string;
   logger?: ILogger;
-  loaderResolver?: ILoaderResolver;
+  loaderResolver?: IResolver<ILoader>;
   environment?: string;
 };

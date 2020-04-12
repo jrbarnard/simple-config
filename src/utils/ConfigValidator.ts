@@ -1,16 +1,36 @@
 import { Options, ILogger, ConfigSchema, IConfigSchemaObj, IConfigValidator } from '../types';
 import Ajv from 'ajv';
 import { InvalidSchemaError } from '../errors';
+import { isConfigSchemaObject } from '../utils/guards';
 
+/**
+ * The schema type once converted to json schema for validation
+ */
+interface ISchemaProperties {
+  [k: string]: {
+    type: string;
+    properties?: ISchemaProperties;
+  };
+}
+
+/**
+ * A validator that can convert and validate config schemas into json schema
+ */
 export class ConfigValidator implements IConfigValidator {
   private logger: ILogger;
   private ajv: Ajv.Ajv;
+
   constructor(options: Options.IConfigValidatorOptions) {
     this.logger = options.logger;
     this.ajv = new Ajv();
   }
 
-  private getType(schema: IConfigSchemaObj): string {
+  /**
+   * Get the string representation of the allowed type from the config schema object
+   * This type matches up to JSON schema properties
+   * @param schema 
+   */
+  private getType<T>(schema: IConfigSchemaObj<T>): string {
     let type: string;
 
     switch (schema._type) {
@@ -33,14 +53,20 @@ export class ConfigValidator implements IConfigValidator {
     return type;
   }
 
-  private getSchemaProperties<T>(schema: ConfigSchema<T>) {
-    const properties: any = {};
+  /**
+   * Get the json schema properties for the config schema
+   * @param schema 
+   */
+  private getSchemaProperties<T>(schema: ConfigSchema<T>): ISchemaProperties {
+    const properties: ISchemaProperties = {};
     for (const key in schema) {
       if (!schema.hasOwnProperty(key)) {
         continue;
       }
 
-      properties[key] = {};
+      properties[key] = {
+        type: 'object',
+      };
 
       let type: string;
       if (typeof schema[key] !== 'object') {
@@ -50,13 +76,12 @@ export class ConfigValidator implements IConfigValidator {
 
       // Check if we are defining the type
       // Otherwise it's a nested object
-      if ('_type' in schema[key]) {
-        const keySchema: IConfigSchemaObj = schema[key] as IConfigSchemaObj;
-        type = this.getType(keySchema);
+      const schemaValue = schema[key];
+      if (isConfigSchemaObject(schemaValue)) {
+        type = this.getType(schemaValue);
       } else {
-        type = 'object';
         // Recursively build properties
-        properties[key].properties = this.getSchemaProperties<T[keyof T]>(schema[key] as ConfigSchema<T[keyof T]>);
+        properties[key].properties = this.getSchemaProperties(schema[key] as ConfigSchema<T[keyof T]>);
       }
 
       properties[key].type = type;
@@ -65,14 +90,19 @@ export class ConfigValidator implements IConfigValidator {
     return properties;
   }
 
-  public cast(schema: IConfigSchemaObj, value: any): any {
+  /**
+   * Cast the schema value to the _type cast specified in the schema object
+   * @param schema 
+   * @param value 
+   */
+  public cast<T>(schema: IConfigSchemaObj<T>, value: T): any {
     switch (schema._type) {
       case String:
         return String(value);
       case Number:
         return Number(value);
       case Boolean:
-        const flaseyValues = [
+        const flaseyValues: any[] = [
           'false',
           '0',
           0,
@@ -84,10 +114,13 @@ export class ConfigValidator implements IConfigValidator {
     return value;
   }
 
-  public async validate(schema: IConfigSchemaObj, value: any): Promise<boolean> {
-    const jsonSchema: any = {
-      type: this.getType(schema),
-    };
+  /**
+   * Validate a specific value against it's schema
+   * @param schema
+   * @param value
+   */
+  public async validate<T>(schema: IConfigSchemaObj<T>, value: T): Promise<boolean> {
+    const jsonSchema = this.getSchemaProperties(schema);
 
     const test = this.ajv.compile(jsonSchema);
     
@@ -98,6 +131,11 @@ export class ConfigValidator implements IConfigValidator {
     return true;
   }
 
+  /**
+   * Validates a full set of ConfigSchema
+   * @param schema 
+   * @param config 
+   */
   public async validateFull<T>(schema: ConfigSchema<T>, config: Partial<T>): Promise<boolean> {
     this.logger.debug('Validating schema config');
 

@@ -139,6 +139,7 @@ export class Config<T> {
     this.generateStore(this.schema);
 
     // Flatten the keys for easy access later on
+    // TODO: Do this on demand?
     this.flattenedKeys = this.flattenKeys(this.store);
 
     if (environment) {
@@ -154,7 +155,8 @@ export class Config<T> {
         if (!(e instanceof SchemaNotFoundError)) {
           throw e;
         }
-        this.logger.info(`Failed to load / validate schema`);
+
+        this.logger.info(`Failed to load schema`);
       }
     }
   }

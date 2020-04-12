@@ -78,7 +78,7 @@ export class ConfigStore {
    * Load if is not already
    * @param key 
    */
-  public async getValueForKey(key: string): Promise<any> {
+  public async getValueForKey<C>(key: string): Promise<C> {
     if (!(key in this.store)) {
       throw new Error(`Key (${key}) does not exist in store`);
     }
@@ -91,7 +91,7 @@ export class ConfigStore {
 
     this.logger.debug(`No value loaded for ${key}, loading...`);
 
-    const keySchema = this.schema[key] as IConfigSchemaObj;
+    const keySchema = this.schema[key] as IConfigSchemaObj<C>;
     const src = keySchema._source;
     const srcKey = keySchema._key ?? key;
 

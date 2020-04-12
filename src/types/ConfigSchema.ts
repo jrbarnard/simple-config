@@ -7,6 +7,8 @@ export interface IConfigSchemaObj<T> {
   _key?: string;
 }
 
+export type ConfigSchemaValue<T> = ConfigSchema<T> | IConfigSchemaObj<T>;
+
 export type ConfigSchema<T> = {
-  [P in keyof T]: ConfigSchema<T[P]> | IConfigSchemaObj<T[P]>;
+  [P in keyof T]: ConfigSchemaValue<T[P]>;
 }
