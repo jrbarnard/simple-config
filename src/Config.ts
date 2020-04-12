@@ -1,4 +1,4 @@
-import { Options, ILogger, ConfigSchema, IFlattenedKeys, Source, ILoader, IResolver } from './types';
+import { Options, ILogger, ConfigSchema, IFlattenedKeys, Source, ILoader, IResolver, IObject } from './types';
 import { ConfigLoader } from './utils/ConfigLoader';
 import { Logger } from './utils/Logger';
 import { SchemaNotFoundError, UninitialisedError, UndefinedConfigKeyError } from './errors';
@@ -8,6 +8,7 @@ import { ConfigStore } from './ConfigStore';
 import { Resolver } from './utils/Resolver';
 import { EnvironmentLoader } from './loaders/EnvironmentLoader';
 import { SSMLoader } from './loaders/SSMLoader';
+import { FileLoader } from './loaders/FileLoader';
 
 export class Config<T> {
   private configLoader: ConfigLoader;
@@ -27,8 +28,9 @@ export class Config<T> {
       logger: this.logger.spawn('LoaderResolver'),
       registered: {
         // Default loaders
+        // [Source.File]: FileLoader,
         [Source.Environment]: EnvironmentLoader,
-        [Source.SSM]: SSMLoader
+        [Source.SSM]: SSMLoader,
       },
       // Pass through a retrieval function so the loader can resolve it's own config
       configRetriever: async (loader: string) => {
@@ -139,15 +141,15 @@ export class Config<T> {
     this.generateStore(this.schema);
 
     // Flatten the keys for easy access later on
-    // TODO: Do this on demand?
+    // TODO: Do this on demand? - CONVERT TO LOADER
     this.flattenedKeys = this.flattenKeys(this.store);
 
     if (environment) {
       this.logger.debug(`Loading environment config`);
-      let environmentConfig: Partial<T>;
+      let environmentConfig: IObject;
       try {
-        environmentConfig = await this.configLoader.load(`${environment}.json`);
-        await this.configValidator.validateFull<T>(this.schema, environmentConfig);
+        environmentConfig = await this.configLoader.load(`${environment}`);
+        await this.configValidator.validateFull<T>(this.schema, environmentConfig as T);
 
         this.setConfig(environmentConfig);
       } catch (e) {

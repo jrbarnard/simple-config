@@ -5,3 +5,4 @@ export { UninitialisedError } from './UninitialisedError';
 export { KeyLoadingError } from './KeyLoadingError';
 export { InvalidResolvableError } from './InvalidResolvableError';
 export { SchemaValidationError } from './SchemaValidationError';
+export { FileNotFoundError } from './FileNotFoundError';

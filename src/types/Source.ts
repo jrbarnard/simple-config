@@ -1,4 +1,5 @@
 export enum Source {
   Environment = 'env',
-  SSM = 'ssm'
+  SSM = 'ssm',
+  File = 'file',
 };
