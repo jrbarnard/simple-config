@@ -1,16 +1,15 @@
 import * as fs from 'fs';
-import { ILoader, ILogger, IObject } from '../types';
+import { ILoader, ILogger, IObject, Loaders, Options } from '../types';
 import { KeyLoadingError, FileNotFoundError, InvalidSchemaError } from '../errors';
-import { IExpectsLoggerOptions } from '../types/options';
 
-interface IFileLoaderOptions extends IExpectsLoggerOptions {
-  path: string;
+interface IFileLoaderOptions extends Loaders.IFileLoaderConfigurableOptions, Options.IExpectsLoggerOptions {
+  //
 }
 
 /**
  * Load values from an environment file
  */
-export class FileLoader implements ILoader<string  | IObject> {
+export class FileLoader implements ILoader<any | IObject> {
   private path: string;
   private logger: ILogger;
   private loaded?: IObject | undefined;
@@ -59,14 +58,23 @@ export class FileLoader implements ILoader<string  | IObject> {
     return config;
   }
 
+  /**
+   * Load the whole file
+   * @param key 
+   */
   async load(key: '*'): Promise<IObject>;
-  async load(key: string): Promise<string>;
+
+  /**
+   * Load a specific key of the file
+   * @param key 
+   */
+  async load(key: string): Promise<any>;
 
   /**
    * Load the key from the config file
    * @param key 
    */
-  async load(key: string): Promise<string | IObject> {
+  async load(key: string): Promise<any | IObject> {
     if (this.loaded === undefined) {
       this.loaded = this.loadFile();
     }

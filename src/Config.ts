@@ -1,7 +1,7 @@
 import { Options, ILogger, ConfigSchema, IFlattenedKeys, Source, ILoader, IResolver, IObject } from './types';
 import { ConfigLoader } from './utils/ConfigLoader';
 import { Logger } from './utils/Logger';
-import { SchemaNotFoundError, UninitialisedError, UndefinedConfigKeyError } from './errors';
+import { UninitialisedError, UndefinedConfigKeyError, FileNotFoundError } from './errors';
 import { ConfigValidator } from './utils/ConfigValidator';
 import { ConfigValue } from './ConfigValue';
 import { ConfigStore } from './ConfigStore';
@@ -19,16 +19,17 @@ export class Config<T> {
   private store!: ConfigStore;
   private loaderResolver: IResolver<ILoader>;
   private environment?: string | undefined;
+  private configDirectory: string;
 
   constructor(options: Options.IConfigOptions = {}) {
     this.logger = options.logger ?? new Logger();
     this.environment = options.environment ?? process.env.NODE_ENV;
+    this.configDirectory = options.configDirectory ?? 'config';
 
     this.loaderResolver = options.loaderResolver ?? new Resolver<ILoader>({
       logger: this.logger.spawn('LoaderResolver'),
       registered: {
         // Default loaders
-        // [Source.File]: FileLoader,
         [Source.Environment]: EnvironmentLoader,
         [Source.SSM]: SSMLoader,
       },
@@ -39,7 +40,6 @@ export class Config<T> {
     });
     this.configLoader = new ConfigLoader({
       logger: this.logger.spawn('ConfigLoader'),
-      directory: options.configDirectory,
       loaderResolver: this.loaderResolver
     });
     this.configValidator = new ConfigValidator({
@@ -86,6 +86,7 @@ export class Config<T> {
 
   /**
    * Set config key values (partial or full), will deep merge
+   * This sets the default values of the config
    *
    * @param config 
    * @param keyNamespace 
@@ -122,6 +123,38 @@ export class Config<T> {
   }
 
   /**
+   * Loads and sets config from  the currently set environment file
+   */
+  private async loadEnvironmentFileConfig() {
+    const environment = this.getEnvironment();
+
+    if (environment) {
+      this.logger.debug(`Loading environment config`);
+
+      // Set up the file loader so we can retrieve the environment file
+      this.addLoader(Source.EnvFile, new FileLoader({
+        logger: this.logger,
+        path: `${this.configDirectory}/${environment}.json`
+      }));
+
+      let environmentConfig: IObject;
+      try {
+        environmentConfig = await this.configLoader.loadFromSource(Source.EnvFile, '*');
+        await this.configValidator.validateFull<T>(this.schema, environmentConfig as T);
+
+        this.setConfig(environmentConfig);
+      } catch (e) {
+        // Swallow SchemaNotFoundError's, re throw anything else
+        if (!(e instanceof FileNotFoundError)) {
+          throw e;
+        }
+
+        this.logger.info(`Failed to load schema`);
+      }
+    }
+  }
+
+  /**
    * Initialise the config with the passed schema
    * This will do some processing and try to load the environment specific config file & validate
    *
@@ -133,34 +166,15 @@ export class Config<T> {
       return;
     }
 
-    const environment = this.getEnvironment();
-    this.logger.debug(`Initialising with environment ${environment}`);
-    this.schema = schema;
-
     // Generate a nested store from the schema
+    this.schema = schema;
     this.generateStore(this.schema);
 
     // Flatten the keys for easy access later on
-    // TODO: Do this on demand? - CONVERT TO LOADER
     this.flattenedKeys = this.flattenKeys(this.store);
 
-    if (environment) {
-      this.logger.debug(`Loading environment config`);
-      let environmentConfig: IObject;
-      try {
-        environmentConfig = await this.configLoader.load(`${environment}`);
-        await this.configValidator.validateFull<T>(this.schema, environmentConfig as T);
-
-        this.setConfig(environmentConfig);
-      } catch (e) {
-        // Swallow SchemaNotFoundError's, re throw anything else
-        if (!(e instanceof SchemaNotFoundError)) {
-          throw e;
-        }
-
-        this.logger.info(`Failed to load schema`);
-      }
-    }
+    // Load the environment file config upfront, this will merge on top of the defaults
+    this.loadEnvironmentFileConfig();
   }
 
   /**
