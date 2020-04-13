@@ -1,5 +1,5 @@
 import { Options, ILogger, ConfigSchema, IConfigSchemaObj, IConfigValidator } from '../types';
-import Ajv from 'ajv';
+import Ajv, { ErrorObject } from 'ajv';
 import { SchemaValidationError, InvalidSchemaError } from '../errors';
 import { isConfigSchemaObject } from '../utils/guards';
 import { ConfigSchemaValue } from '../types/ConfigSchema';
@@ -122,15 +122,22 @@ export class ConfigValidator implements IConfigValidator {
     return value;
   }
 
-  private runAdditionalValidation(schema: ISchemaProperty, value: any): boolean {
+  private runAdditionalValidation(schema: ISchemaProperty, value: any): ErrorObject[] {
+    const errors: ErrorObject[] = [];
     if (schema.type === 'number') {
       // Do not allow NaN
       if (isNaN(value)) {
-        return false;
+        errors.push({
+          keyword: 'type',
+          dataPath: '',
+          schemaPath: '#/type',
+          params: schema,
+          message: 'should be number'
+        });
       }
     }
 
-    return true;
+    return errors;
   }
 
   /**
@@ -142,9 +149,18 @@ export class ConfigValidator implements IConfigValidator {
     const jsonSchema = this.getSchemaProperty(schema);
 
     const test = this.ajv.compile(jsonSchema);
+    let errors: ErrorObject[] = [];
     
-    if (!test(value) || !this.runAdditionalValidation(jsonSchema, value)) {
-      throw new SchemaValidationError('Value failed validation', test.errors);
+    if (!test(value)) {
+      errors = test.errors;
+    }
+    
+    if (errors.length < 1) {
+      errors = this.runAdditionalValidation(jsonSchema, value);
+    }
+
+    if (errors.length > 0) {
+      throw new SchemaValidationError('Value failed validation', errors);
     }
 
     return true;
@@ -163,6 +179,8 @@ export class ConfigValidator implements IConfigValidator {
       type: 'object',
       properties: this.getSchemaProperties(schema)
     };
+
+    // TODO: Add run additional validation
 
     const test = this.ajv.compile(jsonSchema);
     const isValid = test(config);

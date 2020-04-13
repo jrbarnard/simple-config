@@ -1,15 +1,17 @@
 import { ConfigValidator } from '../../../src/utils/ConfigValidator';
 import { ILogger } from '../../../src/types';
+import { SchemaValidationError } from '../../../src/errors';
+
+let validator: ConfigValidator;
+const mockLogger = jest.fn() as unknown as jest.Mocked<ILogger>;
+
+beforeEach(() => {
+  validator = new ConfigValidator({
+    logger: mockLogger
+  });
+});
 
 describe('ConfigValidator.cast', () => {
-  let validator: ConfigValidator;
-  const mockLogger = jest.fn() as unknown as jest.Mocked<ILogger>;
-
-  beforeEach(() => {
-    validator = new ConfigValidator({
-      logger: mockLogger
-    });
-  })
   describe.each([
     ['a string', 'a string'],
     ['123', '123'],
@@ -75,3 +77,108 @@ describe('ConfigValidator.cast', () => {
     });
   });
 });
+
+describe('ConfigValidator.validate', () =>  {
+  describe('When schema is string', () => {
+    it.each([
+      123,
+      999.99,
+      {},
+      [],
+      true,
+      false
+    ])('Will throw when invalid (%s)', async (invalid)  => {
+      expect.assertions(3);
+      try {
+        await validator.validate({
+          _type: String,
+        }, invalid);
+      } catch(e) {
+        expect(e).toBeInstanceOf(SchemaValidationError);
+        const errors = e.getErrors();
+        expect(errors).toHaveLength(1);
+        expect(errors[0].message).toEqual('should be string');
+      }
+    });
+
+    it.each([
+      '',
+      'valid string'
+    ])('Will pass when valid (%s)', async (valid)  => {
+      await expect(validator.validate({
+        _type: String,
+      }, valid)).resolves.toEqual(true);
+    });
+  });
+
+  describe('When schema is number', () => {
+    it.each([
+      NaN,
+      '',
+      'nope',
+      true,
+      false,
+      [],
+      {}
+    ])('Will throw when invalid (%s)', async (invalid)  => {
+      expect.assertions(3);
+      try {
+        await validator.validate({
+          _type: Number,
+        }, invalid);
+      } catch(e) {
+        expect(e).toBeInstanceOf(SchemaValidationError);
+        const errors = e.getErrors();
+        expect(errors).toHaveLength(1);
+        expect(errors[0].message).toEqual('should be number');
+      }
+    });
+
+    it.each([
+      -111,
+      0,
+      1,
+      999,
+      111.111
+    ])('Will pass when valid (%s)', async (valid)  => {
+      await expect(validator.validate({
+        _type: Number,
+      }, valid)).resolves.toEqual(true);
+    });
+  });
+
+  describe('When schema is boolean', () => {
+    it.each([
+      {},
+      123,
+      1,
+      0,
+      'true',
+      'false',
+      []
+    ])('Will throw when invalid (%s)', async (invalid)  => {
+      expect.assertions(3);
+      try {
+        await validator.validate({
+          _type: Boolean,
+        }, invalid);
+      } catch(e) {
+        expect(e).toBeInstanceOf(SchemaValidationError);
+        const errors = e.getErrors();
+        expect(errors).toHaveLength(1);
+        expect(errors[0].message).toEqual('should be boolean');
+      }
+    });
+
+    it.each([
+      true,
+      false
+    ])('Will pass when valid (%s)', async (valid)  => {
+      await expect(validator.validate({
+        _type: Boolean,
+      }, valid)).resolves.toEqual(true);
+    });
+  });
+});
+
+// TODO: validateFull
