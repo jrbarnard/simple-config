@@ -8,8 +8,8 @@
     "clean": "rm -rf build",
     "lint": "tslint",
     "test": "npm run test:unit && npm run test:integration",
-    "test:unit": "jest --testMatch **/test/unit/**/*.test.ts",
-    "test:integration": "jest --testMatch **/test/integration/**/*.test.ts"
+    "test:unit": "jest --testMatch **/test/unit/**/*.test.ts --",
+    "test:integration": "jest --testMatch **/test/integration/**/*.test.ts --"
   },
   "author": "",
   "license": "ISC",

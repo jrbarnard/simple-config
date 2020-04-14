@@ -1,9 +1,10 @@
 import { ConfigValidator } from '../../../src/utils/ConfigValidator';
-import { ILogger } from '../../../src/types';
+import { ConfigSchema } from '../../../src/types';
 import { SchemaValidationError } from '../../../src/errors';
+import { createMockLogger } from '../testHelpers/mockLogger';
 
 let validator: ConfigValidator;
-const mockLogger = jest.fn() as unknown as jest.Mocked<ILogger>;
+const mockLogger = createMockLogger();
 
 beforeEach(() => {
   validator = new ConfigValidator({
@@ -179,6 +180,82 @@ describe('ConfigValidator.validate', () =>  {
       }, valid)).resolves.toEqual(true);
     });
   });
-});
 
-// TODO: validateFull
+  describe('When schema is object', () => {
+    const testSchema: ConfigSchema<{
+      key: string;
+      hello: number;
+      anotherNumber: number;
+      world: boolean;
+    }> = {
+      key: {
+        _type: String
+      },
+      hello: {
+        _type: Number
+      },
+      anotherNumber: {
+        _type: Number
+      },
+      world: {
+        _type: Boolean
+      }
+    };
+    describe('When passed invalid data', () => {
+      it('Will throw', async  () => {
+        expect.assertions(3);
+        try {
+          await validator.validate(testSchema, {
+            key: 123,
+            hello: NaN,
+            anotherNumber: 'nope',
+            world: 'notaboolean'
+          } as any);
+        } catch(e) {
+          expect(e).toBeInstanceOf(SchemaValidationError);
+          const errors = e.getErrors();
+          expect(errors).toHaveLength(4);
+          expect(errors).toEqual([{
+            keyword: 'type',
+            dataPath: '.key',
+            schemaPath: '#/properties/key/type',
+            params: { type: 'string' },
+            message: 'should be string'
+          },
+          {
+            keyword: 'type',
+            dataPath: '.hello',
+            schemaPath: '#/properties/hello/NaN',
+            params: { NaN: true },
+            message: 'should be number'
+          },
+          {
+            keyword: 'type',
+            dataPath: '.anotherNumber',
+            schemaPath: '#/properties/anotherNumber/type',
+            params: { type: 'number' },
+            message: 'should be number'
+          },
+          {
+            keyword: 'type',
+            dataPath: '.world',
+            schemaPath: '#/properties/world/type',
+            params: { type: 'boolean' },
+            message: 'should be boolean'
+          }]);
+        }
+      });
+    });
+
+    describe('When passed valid data', () => {
+      it('Will pass', async  () => {
+        await expect(validator.validate(testSchema, {
+          key: 'valid string',
+          hello: 1111,
+          anotherNumber: 999.99,
+          world: false
+        })).resolves.toEqual(true);
+      });
+    });
+  });
+});

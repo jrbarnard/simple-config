@@ -140,7 +140,7 @@ export class Config<T> {
       let environmentConfig: IObject;
       try {
         environmentConfig = await this.configLoader.loadFromSource(Source.EnvFile, '*');
-        await this.configValidator.validateFull<T>(this.schema, environmentConfig as T);
+        await this.configValidator.validate<T>(this.schema, environmentConfig as T);
 
         this.setConfig(environmentConfig);
       } catch (e) {

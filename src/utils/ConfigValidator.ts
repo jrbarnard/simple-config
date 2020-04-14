@@ -1,5 +1,5 @@
 import { Options, ILogger, ConfigSchema, IConfigSchemaObj, IConfigValidator } from '../types';
-import Ajv, { ErrorObject } from 'ajv';
+import Ajv, { ErrorObject, SchemaValidateFunction } from 'ajv';
 import { SchemaValidationError, InvalidSchemaError } from '../errors';
 import { isConfigSchemaObject } from '../utils/guards';
 import { ConfigSchemaValue } from '../types/ConfigSchema';
@@ -7,6 +7,7 @@ import { ConfigSchemaValue } from '../types/ConfigSchema';
 interface ISchemaProperty {
   type: string;
   properties?: ISchemaProperties;
+  [k: string]: any;
 }
 
 /**
@@ -25,7 +26,37 @@ export class ConfigValidator implements IConfigValidator {
 
   constructor(options: Options.IConfigValidatorOptions) {
     this.logger = options.logger;
-    this.ajv = new Ajv();
+    this.ajv = new Ajv({
+      allErrors: true
+    });
+
+    const validateNaN: SchemaValidateFunction = (schema: any, data: any, parentSchema: any, dataPath: any) => {
+      if (!parentSchema.NaN) {
+        return true;
+      }
+
+      if (!isNaN(data)) {
+        return true;
+      }
+
+      validateNaN.errors = [];
+      validateNaN.errors.push({
+        keyword: 'type',
+        dataPath,
+        params: { NaN: parentSchema.NaN },
+        schemaPath: undefined,
+        message: 'should be number'
+      });
+
+      return false;
+    }
+
+    // Add support to verify NaN returns invalid
+    this.ajv.addKeyword('NaN', {
+      type: 'number',
+      validate: validateNaN,
+      errors: true
+    });
   }
 
   /**
@@ -62,7 +93,7 @@ export class ConfigValidator implements IConfigValidator {
    */
   private getSchemaProperty<T>(schemaValue: ConfigSchemaValue<T>): ISchemaProperty {
     const properties: ISchemaProperty = {
-      type: 'object',
+      type: 'object'
     };
 
     if (typeof schemaValue !== 'object') {
@@ -76,6 +107,11 @@ export class ConfigValidator implements IConfigValidator {
     } else {
       // Recursively build properties
       properties.properties = this.getSchemaProperties(schemaValue);
+    }
+
+    // Add additional keywords / properties depending on type & schema
+    if (properties.type === 'number') {
+      properties.NaN = true;
     }
 
     return properties;
@@ -122,31 +158,25 @@ export class ConfigValidator implements IConfigValidator {
     return value;
   }
 
-  private runAdditionalValidation(schema: ISchemaProperty, value: any): ErrorObject[] {
-    const errors: ErrorObject[] = [];
-    if (schema.type === 'number') {
-      // Do not allow NaN
-      if (isNaN(value)) {
-        errors.push({
-          keyword: 'type',
-          dataPath: '',
-          schemaPath: '#/type',
-          params: schema,
-          message: 'should be number'
-        });
-      }
-    }
-
-    return errors;
-  }
+  public async validate<T>(schema: IConfigSchemaObj<T>, value: T): Promise<boolean>;
+  public async validate<T>(schema: ConfigSchema<T>, value: Partial<T>): Promise<boolean>;
 
   /**
    * Validate a specific value against it's schema
    * @param schema
    * @param value
    */
-  public async validate<T>(schema: IConfigSchemaObj<T>, value: T): Promise<boolean> {
-    const jsonSchema = this.getSchemaProperty(schema);
+  public async validate<T>(schema: IConfigSchemaObj<T> | ConfigSchema<T>, value: T | Partial<T>): Promise<boolean> {
+    let jsonSchema: ISchemaProperty;
+
+    if (!isConfigSchemaObject(schema)) {
+      jsonSchema = {
+        type: 'object',
+        properties: this.getSchemaProperties(schema)
+      }
+    } else {
+      jsonSchema = this.getSchemaProperty(schema);
+    }
 
     const test = this.ajv.compile(jsonSchema);
     let errors: ErrorObject[] = [];
@@ -154,42 +184,12 @@ export class ConfigValidator implements IConfigValidator {
     if (!test(value)) {
       errors = test.errors;
     }
-    
-    if (errors.length < 1) {
-      errors = this.runAdditionalValidation(jsonSchema, value);
-    }
 
     if (errors.length > 0) {
+      this.logger.info(`Failed validation: ${JSON.stringify(test.errors)}`);
       throw new SchemaValidationError('Value failed validation', errors);
     }
 
-    return true;
-  }
-
-  /**
-   * Validates a full set of ConfigSchema
-   * @param schema 
-   * @param config 
-   */
-  public async validateFull<T>(schema: ConfigSchema<T>, config: Partial<T>): Promise<boolean> {
-    this.logger.debug('Validating schema config');
-
-    // Build schema for entire schema
-    const jsonSchema: any = {
-      type: 'object',
-      properties: this.getSchemaProperties(schema)
-    };
-
-    // TODO: Add run additional validation
-
-    const test = this.ajv.compile(jsonSchema);
-    const isValid = test(config);
-
-    if (!isValid) {
-      this.logger.info(`Failed validation: ${JSON.stringify(test.errors)}`);
-      throw new SchemaValidationError('Config failed validation', test.errors);
-    }
-    
     return true;
   }
 }
