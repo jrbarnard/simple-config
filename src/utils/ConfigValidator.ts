@@ -30,6 +30,10 @@ export class ConfigValidator implements IConfigValidator {
       allErrors: true
     });
 
+    this.extendAjv();
+  }
+
+  private extendAjv(): void {
     const validateNaN: SchemaValidateFunction = (schema: any, data: any, parentSchema: any, dataPath: any) => {
       if (!parentSchema.NaN) {
         return true;

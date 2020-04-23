@@ -1,6 +1,6 @@
 export interface ILogger {
-  error(message: string): void;
-  info(message: string): void;
-  debug(message: string): void;
-  spawn(namespace: string): ILogger;
+  error(...logs: any[]): void;
+  info(...logs: any[]): void;
+  debug(...logs: any[]): void;
+  spawn(...logs: any[]): ILogger;
 }

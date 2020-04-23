@@ -1,36 +1,144 @@
 import { ILogger } from '../types';
 
+// tslint:disable: no-console
+
+export enum LogLevel {
+  System = 0,
+  Debug = 10,
+  Info = 20,
+  Error = 30
+}
+
+export interface ILoggerOptions {
+  namespace?: string;
+  level?: LogLevel;
+  parent?: ILogger;
+}
+
 /**
  * TODO: Improve to handle logging a full error if we can
  */
 export class Logger implements ILogger {
   private namespace: string;
+  private logLevel: LogLevel;
   private parent: ILogger;
 
-  constructor(namespace?: string, parent?: ILogger) {
-    this.namespace = namespace ?? '';
-    this.parent = parent;
+  constructor(options: ILoggerOptions = {}) {
+    this.namespace = options.namespace ?? '';
+    this.logLevel = options.level ?? LogLevel.Error;
+    this.parent = options.parent;
   }
 
-  scopeMessage(message: string) {
-    return !this.namespace ? message : `${this.namespace} - ${message}`;
+  /**
+   * Set the log level
+   * @param level 
+   */
+  public setLevel(level: LogLevel): this {
+    this.logLevel = level;
+    return this;
   }
 
-  error(message: string): void {
-    console.error(`ERROR: ${this.scopeMessage(message)}`);
+  /**
+   * Is the log level set so that we should log the passed level?
+   * @param level 
+   */
+  public shouldLog(level: LogLevel): boolean {
+    return this.logLevel <= level;
   }
 
-  info(message: string): void {
-    // tslint:disable-next-line: no-console
-    console.info(`INFO: ${this.scopeMessage(message)}`);
+  /**
+   * 
+   * @param prefix
+   */
+  public getLogPrefix(prefix: string): string {
+    prefix += ': ';
+
+    if (this.namespace) {
+      prefix += `${this.namespace} - `;
+    }
+
+    return prefix;
   }
 
-  debug(message: string): void {
-    // tslint:disable-next-line: no-console
-    console.debug(`DEBUG: ${this.scopeMessage(message)}`);
+  /**
+   * Optionally prefix string logs
+   * @param log 
+   * @param prefix 
+   */
+  public maybePrefix(log: any, prefix: string): any {
+    if (typeof log === 'string') {
+      log = `${this.getLogPrefix(prefix)}${log}`;
+    }
+
+    return log;
   }
 
-  spawn(namespace: string): ILogger {
-    return new Logger(namespace, this);
+  /**
+   * Prep an array of logs for output
+   * @param logs 
+   * @param prefix 
+   */
+  public prepareLogs(logs: any[], prefix: string): any {
+    logs = logs.map((log: any) => this.maybePrefix(log, prefix));
+
+    // Ensure we always have a prefix to log
+    if (typeof logs[0] !== 'string') {
+      logs.unshift(this.getLogPrefix(prefix));
+    }
+    
+    return logs;
+  }
+
+  /**
+   * General log
+   * @param logs 
+   */
+  public log(...logs: any[]): this {
+    console.log(...logs);
+    return this;
+  }
+
+  /**
+   * Error level logging
+   * @param logs 
+   */
+  public error(...logs: any[]): this {
+    if (this.shouldLog(LogLevel.Error)) {
+      console.error(...this.prepareLogs(logs, 'ERROR'));
+    }
+    
+    return this;
+  }
+
+  /**
+   * Info level logging
+   * @param logs 
+   */
+  public info(...logs: any[]): this {
+    if (this.shouldLog(LogLevel.Info)) {
+      console.info(...this.prepareLogs(logs, 'INFO'));
+    }
+
+    return this;
+  }
+
+  /**
+   * Debug level logging
+   * @param logs 
+   */
+  public debug(...logs: any[]): this {
+    if (this.shouldLog(LogLevel.Debug)) {
+      console.debug(...this.prepareLogs(logs, 'DEBUG'));
+    }
+
+    return this;
+  }
+
+  public spawn(namespace: string): ILogger {
+    return new Logger({
+      level: this.logLevel,
+      parent: this,
+      namespace
+    });
   }
 }

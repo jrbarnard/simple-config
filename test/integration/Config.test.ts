@@ -1,17 +1,7 @@
-// TODO:
-// Loads defaults from files based on environment
-// Overrides with source based config
-// Will load async on demand
-// Will validate config & throw if invalid
-// Custom loaders
-
-// REFACTOR
-
-// Add config casting
-
 import { Config } from '../../src/Config';
 import { ConfigSchema, Source, ILoader } from '../../src/types';
 import { KeyLoadingError, SchemaValidationError } from '../../src/errors';
+import { LogLevel, Logger } from '../../src/utils/Logger';
 
 interface ITestConfigSchema {
   loaders: {
@@ -118,12 +108,17 @@ class CustomLoader implements ILoader<any> {
  
 const configDirectory = 'test/integration/config';
 
+const logger = new Logger({
+  level: LogLevel.System
+});
+
 describe('Config', () => {
   describe('When environment passed', () => {
     it('Will set the values found in environment files', async () => {
       let config = new Config<ITestConfigSchema>({
         environment: 'dev',
-        configDirectory
+        configDirectory,
+        logger
       });
       await config.initialise(schema);
 
@@ -141,7 +136,8 @@ describe('Config', () => {
       process.env.DB_PASSWORD = 'PROCESS_PASSWORD';
       config = new Config<ITestConfigSchema>({
         environment: 'stage',
-        configDirectory
+        configDirectory,
+        logger
       });
       await config.initialise(schema);
 
@@ -162,7 +158,8 @@ describe('Config', () => {
       // Defaults to NODE_ENV, verify is test
       expect(process.env.NODE_ENV).toEqual('test');
       const config = new Config<ITestConfigSchema>({
-        configDirectory
+        configDirectory,
+        logger
       });
       await config.initialise(schema);
 
@@ -175,7 +172,8 @@ describe('Config', () => {
     });
     it('Will throw an error', async () => {
       const config = new Config<ITestConfigSchema>({
-        configDirectory
+        configDirectory,
+        logger
       });
       await config.initialise(schema);
 
@@ -186,7 +184,8 @@ describe('Config', () => {
   describe('When value set but does not meet validation', () => {
     it('Will throw an error', async () => {
       const config = new Config<ITestConfigSchema>({
-        configDirectory
+        configDirectory,
+        logger
       });
       config.addLoader('custom', new CustomLoader());
       await config.initialise(schema);
@@ -199,7 +198,8 @@ describe('Config', () => {
   describe('When using a custom loader', () => {
     it('Will load from the custom loader', async () => {
       const config = new Config<ITestConfigSchema>({
-        configDirectory
+        configDirectory,
+        logger
       });
       config.addLoader('custom', new CustomLoader());
       await config.initialise(schema);

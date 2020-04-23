@@ -5,6 +5,5 @@ import { ILoader } from '../ILoader';
 export interface IConfigOptions {
   configDirectory?: string;
   logger?: ILogger;
-  loaderResolver?: IResolver<ILoader>;
   environment?: string;
 };

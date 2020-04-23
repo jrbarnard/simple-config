@@ -26,7 +26,7 @@ export class Config<T> {
     this.environment = options.environment ?? process.env.NODE_ENV;
     this.configDirectory = options.configDirectory ?? 'config';
 
-    this.loaderResolver = options.loaderResolver ?? new Resolver<ILoader>({
+    this.loaderResolver = new Resolver<ILoader>({
       logger: this.logger.spawn('LoaderResolver'),
       registered: {
         // Default loaders
