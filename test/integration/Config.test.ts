@@ -1,7 +1,7 @@
 import { Config } from '../../src/Config';
-import { ConfigSchema, Source, ILoader } from '../../src/types';
+import { ConfigSchema, Source, ILoader, LogLevel } from '../../src/types';
 import { KeyLoadingError, SchemaValidationError } from '../../src/errors';
-import { LogLevel, Logger } from '../../src/utils/Logger';
+import { Logger } from '../../src/utils/Logger';
 
 interface ITestConfigSchema {
   loaders: {

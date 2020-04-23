@@ -1,5 +1,6 @@
-import { Logger, LogLevel } from '../../../src/utils/Logger';
-import { ILogger } from '../../../src/types';
+import { Logger } from '../../../src/utils/Logger';
+import { ILogger, LogLevel } from '../../../src/types';
+import { spawn } from 'child_process';
 
 // tslint:disable: no-console
 console.error = jest.fn();
@@ -99,5 +100,24 @@ describe('When log level is debug', () => {
     expect(console.debug).toHaveBeenCalledWith('DEBUG: Does log');
     expect(console.info).toHaveBeenCalledTimes(1);
     expect(console.info).toHaveBeenCalledWith('INFO: Does log');
+  });
+});
+
+describe('Logger.spawn', () => {
+  it('Will return a spawned logger', () => {
+    const logger = new Logger({
+      level: LogLevel.Info,
+      namespace: 'TopLevel'
+    });
+
+    const spawned = logger.spawn('NextLevel');
+    expect(spawned).toBeInstanceOf(Logger);
+    expect(spawned).not.toBe(logger);
+    spawned.error('Some error');
+    spawned.debug('Does not log');
+
+    expect(console.debug).not.toHaveBeenCalled();
+    expect(console.error).toHaveBeenCalledTimes(1);
+    expect(console.error).toHaveBeenCalledWith('ERROR: TopLevel.NextLevel - Some error');
   });
 });

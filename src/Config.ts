@@ -110,7 +110,7 @@ export class Config<T> {
   }
 
   /**
-   * Generate a store tree from thge passed schema
+   * Generate a store tree from the passed schema
    * @param schema 
    */
   private generateStore(schema: ConfigSchema<T>): void {
@@ -217,8 +217,8 @@ export class Config<T> {
         const parentStore = this.flattenedKeys[parentKey];
 
         if (!(parentStore instanceof ConfigStore)) {
-          this.logger.error('Failure to get parent store');
-          throw new Error('Failure to get parent store');
+          this.logger.error(`Failure to get parent store under key - ${parentKey}`);
+          throw new Error(`Failure to get parent store under key - ${parentKey}`);
         }
         store = parentStore;
       }
@@ -235,7 +235,7 @@ export class Config<T> {
    * @param key 
    * @param loader 
    */
-  addLoader(key: string, loader: ILoader): void {
+  public addLoader(key: string, loader: ILoader): void {
     this.loaderResolver.add(key, loader);
   }
 }

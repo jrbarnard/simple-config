@@ -7,6 +7,7 @@
 - Multiple data source config files
 - Lazy loading config from external sources (e.g SSM)
 - Ability to add custom loaders for other external sources
+- Can cast and validate config
 
 ## Usage
 
@@ -80,8 +81,6 @@ export const schema: ConfigSchema<IAppConfig> = {
 
 - Casting data on way in from external sources based on schema
 - Tests & Clean up
-- Extract file loading functionality to a FileLoader
-- Improve logger to be able to log full error objects
 - Improve SSM loader to decrypt values
 - Events (hook into set up & see when config variables change / are requested)
 - External caching?

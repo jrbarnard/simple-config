@@ -1,4 +1,4 @@
-export { ILogger } from './ILogger';
+export { ILogger, LogLevel } from './ILogger';
 export { ConfigSchema, IConfigSchemaObj } from './ConfigSchema';
 export { IConfigValidator } from './IConfigValidator';
 export { IConfigLoader } from './IConfigLoader';

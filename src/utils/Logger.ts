@@ -1,19 +1,6 @@
-import { ILogger } from '../types';
+import { ILogger, Options, LogLevel } from '../types';
 
 // tslint:disable: no-console
-
-export enum LogLevel {
-  System = 0,
-  Debug = 10,
-  Info = 20,
-  Error = 30
-}
-
-export interface ILoggerOptions {
-  namespace?: string;
-  level?: LogLevel;
-  parent?: ILogger;
-}
 
 /**
  * TODO: Improve to handle logging a full error if we can
@@ -23,7 +10,7 @@ export class Logger implements ILogger {
   private logLevel: LogLevel;
   private parent: ILogger;
 
-  constructor(options: ILoggerOptions = {}) {
+  constructor(options: Options.ILoggerOptions = {}) {
     this.namespace = options.namespace ?? '';
     this.logLevel = options.level ?? LogLevel.Error;
     this.parent = options.parent;
@@ -138,7 +125,7 @@ export class Logger implements ILogger {
     return new Logger({
       level: this.logLevel,
       parent: this,
-      namespace
+      namespace: (this.namespace ? `${this.namespace}.` : '') + namespace
     });
   }
 }
