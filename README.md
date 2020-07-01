@@ -13,13 +13,12 @@
 
 1. Define your schema
 ```
+import { ConfigSchema, Source, ISSMLoaderConfigurableOptions } from '@jrbarnard/simple-config';
+
 interface IAppConfig {
-  // When a build in loader is resolved for the first time it will be injected with the config under loaders and it's key
-  // E.g here it will inject the region
+  // When a built in loader is resolved for the first time it will be injected with the config under loaders and it's key
   loaders: {
-    ssm: {
-      region: string;
-    }
+    ssm: ISSMLoaderConfigurableOptions
   },
   db: {
     host: string;

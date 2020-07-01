@@ -37,6 +37,7 @@ export class FileLoader implements ILoader<any | IObject> {
    * Load the config file
    */
   private loadFile(): IObject {
+    // TODO: CHANGE PATH RESOLUTION TO SUPPORT RELATIVE / NON CWD PATHS
     const path = this.getFullFilePath();
     this.logger.debug(`Loading file: ${path}`);
 
@@ -50,6 +51,10 @@ export class FileLoader implements ILoader<any | IObject> {
     try {
       this.logger.debug(`Decoding config file`);
       config = JSON.parse(fs.readFileSync(path).toString());
+
+      if (typeof config !== 'object' || config === null || Array.isArray(config)) {
+        throw new Error();
+      }
     } catch (e) {
       this.logger.error(`Failed to load and parse config file: ${path}: ${e.message}`);
       throw new InvalidSchemaError('The config file is invalid');

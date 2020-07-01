@@ -193,6 +193,7 @@ export class Config<T> {
    */
   public async get<C>(key: string, defaultValue?: C): Promise<C> {
     if (!this.has(key)) {
+      // TODO: Should still throw
       if (defaultValue !== undefined) {
         return defaultValue;
       }
@@ -200,6 +201,7 @@ export class Config<T> {
       throw new UndefinedConfigKeyError(key);
     }
 
+    // TODO: Wrap in try catch and pass back default if set
     const flattenedKeyValue = this.flattenedKeys[key];
 
     // If we have a config value we need to go one level up to it's store

@@ -105,7 +105,7 @@ export class ConfigStore {
       }
 
       throw new InvalidSchemaError(
-        `No _src & _key specified for key: ${key}, either specify a default, use environment files or define the _src & _key.`
+        `No _source & _key specified for key: ${key}, either specify a default, use environment files or define the _source & _key.`
       );
     }
 
