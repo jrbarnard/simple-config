@@ -3,10 +3,6 @@ import * as path from 'path';
 import { ILoader, ILogger, IObject, Loaders, Options } from '../types';
 import { KeyLoadingError, FileNotFoundError, InvalidSchemaError } from '../errors';
 
-interface IFileLoaderOptions extends Loaders.IFileLoaderConfigurableOptions, Options.IExpectsLoggerOptions {
-  //
-}
-
 /**
  * Load values from an environment file
  */
@@ -15,7 +11,7 @@ export class FileLoader implements ILoader<any | IObject> {
   private logger: ILogger;
   private loaded?: IObject | undefined;
 
-  constructor(options: IFileLoaderOptions) {
+  constructor(options: Loaders.IFileLoaderConfigurableOptions & Options.IExpectsLoggerOptions) {
     this.path = options.path;
     this.logger = options.logger;
   }

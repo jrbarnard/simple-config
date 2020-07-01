@@ -115,12 +115,10 @@ const logger = new Logger({
 describe('Config', () => {
   describe('When environment passed', () => {
     it('Will set the values found in environment files', async () => {
-      let config = new Config<ITestConfigSchema>({
-        environment: 'dev',
-        configDirectory,
+      let config = new Config<ITestConfigSchema>(schema, {
         logger
       });
-      await config.initialise(schema);
+      await config.loadConfigFile('dev', configDirectory);
 
       let result = await config.get('db');
       expect(result).toEqual({
@@ -134,12 +132,10 @@ describe('Config', () => {
 
       // As no password in stage, if we try to load it will fail, so we need to set in process.env
       process.env.DB_PASSWORD = 'PROCESS_PASSWORD';
-      config = new Config<ITestConfigSchema>({
-        environment: 'stage',
-        configDirectory,
+      config = new Config<ITestConfigSchema>(schema, {
         logger
       });
-      await config.initialise(schema);
+      await config.loadConfigFile('stage', configDirectory);
 
       result = await config.get('db');
       delete process.env.DB_PASSWORD;
@@ -153,29 +149,15 @@ describe('Config', () => {
       });
     });
   });
-  describe('When environment not passed', () => {
-    it('Will get just the defaults', async () => {
-      // Defaults to NODE_ENV, verify is test
-      expect(process.env.NODE_ENV).toEqual('test');
-      const config = new Config<ITestConfigSchema>({
-        configDirectory,
-        logger
-      });
-      await config.initialise(schema);
-
-      await expect(config.get('db.nested.test')).resolves.toEqual('hello world');
-    });
-  });
   describe('When value not set and does not meet validation', () => {
     beforeEach(() => {
       delete process.env.DB_PASSWORD;
     });
     it('Will throw an error', async () => {
-      const config = new Config<ITestConfigSchema>({
-        configDirectory,
+      const config = new Config<ITestConfigSchema>(schema, {
         logger
       });
-      await config.initialise(schema);
+      // No config file loaded
 
       await expect(config.get('db.password')).rejects.toThrow(KeyLoadingError);
     });
@@ -183,12 +165,10 @@ describe('Config', () => {
 
   describe('When value set but does not meet validation', () => {
     it('Will throw an error', async () => {
-      const config = new Config<ITestConfigSchema>({
-        configDirectory,
+      const config = new Config<ITestConfigSchema>(schema, {
         logger
       });
       config.addLoader('custom', new CustomLoader());
-      await config.initialise(schema);
 
       // Managed to load, but could not cast to number (NaN), so fails validation
       await expect(config.get('customLoaded.aNumber')).rejects.toThrow(SchemaValidationError);
@@ -197,12 +177,10 @@ describe('Config', () => {
 
   describe('When using a custom loader', () => {
     it('Will load from the custom loader', async () => {
-      const config = new Config<ITestConfigSchema>({
-        configDirectory,
+      const config = new Config<ITestConfigSchema>(schema, {
         logger
       });
       config.addLoader('custom', new CustomLoader());
-      await config.initialise(schema);
   
       await expect(config.get('customLoaded.aValidNumber')).resolves.toEqual(12121212);
     })

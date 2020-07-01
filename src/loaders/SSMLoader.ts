@@ -1,9 +1,5 @@
-import { ILoader, ILogger, Options, Loaders } from '../types';
 import { KeyLoadingError } from '../errors';
-
-interface ISSMLoaderOptions extends Loaders.ISSMLoaderConfigurableOptions, Options.IExpectsLoggerOptions {
-  //
-}
+import { ILoader, ILogger, Options, Loaders } from '../types';
 
 /**
  * TODO: Replace with codependency?
@@ -14,7 +10,7 @@ export class SSMLoader implements ILoader {
   private region?: string;
   private logger: ILogger;
 
-  constructor (options: ISSMLoaderOptions) {
+  constructor (options: Loaders.ISSMLoaderConfigurableOptions & Options.IExpectsLoggerOptions) {
     this.region = options.region;
     this.logger = options.logger;
   }

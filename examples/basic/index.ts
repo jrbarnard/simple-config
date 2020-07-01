@@ -1,7 +1,5 @@
 // tslint:disable: no-console
-
-import { ConfigSchema, Config, Source, LogLevel } from '../../src';
-import { Logger } from '../../src/utils/Logger';
+import { ConfigSchema, Config, Source } from '../../src';
 
 interface IBasicConfigSchema {
   services: {
@@ -33,9 +31,9 @@ const schema: ConfigSchema<IBasicConfigSchema> = {
 };
 
 (async () => {
-  // No environment set
-  let config = new Config<IBasicConfigSchema>();
-  await config.initialise(schema);
+  // Load a basic config file with just the feature flags
+  const config = new Config<IBasicConfigSchema>(schema);
+  await config.loadConfigFile('testing', [__dirname, 'config'].join('/'));
 
   try {
     await config.get('services.google.apiKey')
@@ -45,18 +43,6 @@ const schema: ConfigSchema<IBasicConfigSchema> = {
   }
 
   process.env.GOOGLE_API_KEY = '123456789';
-  console.log('Google api key: ', await config.get('services.google.apiKey'));
-
-  // Defaults to false due to definition above
-  console.log('New form feature flag: ', await config.get('featureFlags.newForm'));
-
-  // Specified environment which has an environment file
-  config = new Config<IBasicConfigSchema>({
-    environment: 'testing',
-    configDirectory: [__dirname, 'config'].join('/')
-  });
-  await config.initialise(schema);
-
-  // Now will be true as set to true in ./config/testing.json
-  console.log('New form feature flag: ', await config.get('featureFlags.newForm'));
+  console.log(await config.get('services.google.apiKey')); // 123456789
+  console.log(await config.get('featureFlags.newForm')) // true;
 })();

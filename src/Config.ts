@@ -1,7 +1,7 @@
-import { Options, ILogger, ConfigSchema, IFlattenedKeys, Source, ILoader, IResolver, IObject } from './types';
+import { Options, ILogger, ConfigSchema, IFlattenedKeys, Source, ILoader, IResolver } from './types';
 import { ConfigLoader } from './utils/ConfigLoader';
 import { Logger } from './utils/Logger';
-import { UninitialisedError, UndefinedConfigKeyError, FileNotFoundError } from './errors';
+import { UndefinedConfigKeyError, FileNotFoundError } from './errors';
 import { ConfigValidator } from './utils/ConfigValidator';
 import { ConfigValue } from './ConfigValue';
 import { ConfigStore } from './ConfigStore';
@@ -14,17 +14,18 @@ export class Config<T> {
   private configLoader: ConfigLoader;
   private configValidator: ConfigValidator;
   private logger: ILogger;
-  private schema!: ConfigSchema<T>;
-  private flattenedKeys: IFlattenedKeys = {};
+  private schema: ConfigSchema<T>;
+  private flattenedKeys: IFlattenedKeys;
   private store!: ConfigStore;
   private loaderResolver: IResolver<ILoader>;
-  private environment?: string | undefined;
-  private configDirectory: string;
 
-  constructor(options: Options.IConfigOptions = {}) {
+  /**
+   * 
+   * @param schema 
+   * @param options 
+   */
+  constructor(schema: ConfigSchema<T>, options: Options.IConfigOptions = {}) {
     this.logger = options.logger ?? new Logger();
-    this.environment = options.environment ?? process.env.NODE_ENV;
-    this.configDirectory = options.configDirectory ?? 'config';
 
     this.loaderResolver = new Resolver<ILoader>({
       logger: this.logger.spawn('LoaderResolver'),
@@ -45,26 +46,16 @@ export class Config<T> {
     this.configValidator = new ConfigValidator({
       logger: this.logger.spawn('ConfigValidator'),
     });
-  }
-
-  private getEnvironment(): string | undefined {
-    return this.environment;
-  }
-
-  public isInitialised(): boolean {
-    return !!this.schema;
-  }
-
-  private validateInitialised(): boolean {
-    if (!this.isInitialised()) {
-      throw new UninitialisedError();
-    }
-    return true;
+    
+    this.schema = schema;
+    this.generateStore(this.schema);
+    this.flattenedKeys = this.flattenKeys(this.store);
   }
 
   /**
    * Flatten the store keys recursively to make lookups quicker
-   * @param schema 
+   * @param store
+   * @param parent
    */
   private flattenKeys(store: ConfigStore, parent: string = ''): IFlattenedKeys {
     let keys: IFlattenedKeys = {};
@@ -123,62 +114,30 @@ export class Config<T> {
   }
 
   /**
-   * Loads and sets config from  the currently set environment file
-   */
-  private async loadEnvironmentFileConfig(): Promise<void> {
-    const environment = this.getEnvironment();
-
-    if (environment) {
-      this.logger.debug(`Loading environment config`);
-
-      // Set up the file loader so we can retrieve the environment file
-      // NB: Must be set up here rather than resolved dynamically through the resolver as we have not
-      // yet completed initialisation
-      // TODO: Improve? Maybe don't resolve at init time, but at request time
-      this.addLoader(Source.EnvFile, new FileLoader({
-        logger: this.logger.spawn('FileLoader'),
-        path: `${this.configDirectory}/${environment}.json`
-      }));
-
-      let environmentConfig: IObject;
-      try {
-        environmentConfig = await this.configLoader.loadFromSource(Source.EnvFile, '*');
-        await this.configValidator.validate<T>(this.schema, environmentConfig as T);
-
-        this.setConfig(environmentConfig);
-      } catch (e) {
-        // Swallow SchemaNotFoundError's, re throw anything else
-        if (!(e instanceof FileNotFoundError)) {
-          throw e;
-        }
-
-        this.logger.info(`Failed to load schema`);
-      }
-    }
-  }
-
-  /**
-   * Initialise the config with the passed schema
-   * This will do some processing and try to load the environment specific config file & validate
+   * Load a specific json file
    *
-   * @param schema 
+   * The file name (not including .json)
+   * @param file
+   * 
+   * Optional
+   * The config directory to load them from
+   * @param configDirectory
    */
-  public async initialise(schema: ConfigSchema<T>): Promise<Config<T>> {
-    // TODO: Maybe remove need for initialisation
-    if (this.isInitialised()) {
-      this.logger.info('Already initialised');
-      return;
-    }
+  public async loadConfigFile(file: string, configDirectory: string = 'config'): Promise<Config<T>> {
+    this.logger.debug(`Loading environment config`);
 
-    // Generate a nested store from the schema
-    this.schema = schema;
-    this.generateStore(this.schema);
+    this.addLoader(Source.EnvFile, new FileLoader({
+      logger: this.logger.spawn('FileLoader'),
+      path: `${configDirectory}/${file}.json`
+    }));
 
-    // Flatten the keys for easy access later on
-    this.flattenedKeys = this.flattenKeys(this.store);
+    // Load the entire file and then validate it against the schema
+    const config = await this.configLoader.loadFromSource(Source.EnvFile, '*');
+    await this.configValidator.validate<T>(this.schema, config as T);
 
-    // Load the environment file config upfront, this will merge on top of the defaults
-    await this.loadEnvironmentFileConfig();
+    // Merge the loaded config on top of currently loaded
+    this.setConfig(config);
+
     return this;
   }
 
@@ -187,8 +146,6 @@ export class Config<T> {
    * @param key 
    */
   public has(key: string): boolean {
-    this.validateInitialised();
-
     return key in this.flattenedKeys;
   }
 
