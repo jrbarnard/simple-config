@@ -125,15 +125,18 @@ export class Config<T> {
   /**
    * Loads and sets config from  the currently set environment file
    */
-  private async loadEnvironmentFileConfig() {
+  private async loadEnvironmentFileConfig(): Promise<void> {
     const environment = this.getEnvironment();
 
     if (environment) {
       this.logger.debug(`Loading environment config`);
 
       // Set up the file loader so we can retrieve the environment file
+      // NB: Must be set up here rather than resolved dynamically through the resolver as we have not
+      // yet completed initialisation
+      // TODO: Improve? Maybe don't resolve at init time, but at request time
       this.addLoader(Source.EnvFile, new FileLoader({
-        logger: this.logger,
+        logger: this.logger.spawn('FileLoader'),
         path: `${this.configDirectory}/${environment}.json`
       }));
 
@@ -160,7 +163,8 @@ export class Config<T> {
    *
    * @param schema 
    */
-  public async initialise(schema: ConfigSchema<T>): Promise<void> {
+  public async initialise(schema: ConfigSchema<T>): Promise<Config<T>> {
+    // TODO: Maybe remove need for initialisation
     if (this.isInitialised()) {
       this.logger.info('Already initialised');
       return;
@@ -174,7 +178,8 @@ export class Config<T> {
     this.flattenedKeys = this.flattenKeys(this.store);
 
     // Load the environment file config upfront, this will merge on top of the defaults
-    this.loadEnvironmentFileConfig();
+    await this.loadEnvironmentFileConfig();
+    return this;
   }
 
   /**

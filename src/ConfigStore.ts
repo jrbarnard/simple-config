@@ -89,7 +89,13 @@ export class ConfigStore {
 
     // If key specified is a sub store then get the full set of values
     const configValue = this.store[key];
-    if (configValue instanceof ConfigStore || configValue.hasBeenSet()) {
+    if (configValue instanceof ConfigStore) {
+      this.logger.debug('Requested key is store, retrieving all store values');
+      return configValue.getValue();
+    }
+
+    if (configValue.hasBeenSet()) {
+      this.logger.debug('Value for key already set, retrieving from cache');
       return configValue.getValue();
     }
 
@@ -101,6 +107,7 @@ export class ConfigStore {
 
     if (!src || !srcKey) {
       if (configValue.hasDefaultBeenSet()) {
+        this.logger.debug('No source or key, loading default');
         return configValue.getValue();
       }
 

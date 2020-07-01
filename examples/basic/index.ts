@@ -51,16 +51,12 @@ const schema: ConfigSchema<IBasicConfigSchema> = {
   console.log('New form feature flag: ', await config.get('featureFlags.newForm'));
 
   // Specified environment which has an environment file
-  // TODO: FIX ONCE FILE LOADER FIXED
   config = new Config<IBasicConfigSchema>({
     environment: 'testing',
-    configDirectory: __dirname + '/config',
-    logger: new Logger({
-      level: LogLevel.System
-    })
+    configDirectory: [__dirname, 'config'].join('/')
   });
   await config.initialise(schema);
 
-  // Now should be true as set to true in ./config/testing.json
+  // Now will be true as set to true in ./config/testing.json
   console.log('New form feature flag: ', await config.get('featureFlags.newForm'));
 })();

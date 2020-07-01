@@ -9,7 +9,7 @@ const mockFs = fs as jest.Mocked<any>;
 describe('FileLoader.load', () => {
   it('Will only load file once', async () => {
     const loader = new FileLoader({
-      path: 'some/path',
+      path: 'some/path.json',
       logger: createMockLogger()
     });
 
@@ -24,7 +24,7 @@ describe('FileLoader.load', () => {
   describe('If file not found', () => {
     it('Will throw FileNotFoundError', async ()  => {
       const loader = new FileLoader({
-        path: 'some/path',
+        path: 'some/path.json',
         logger: createMockLogger()
       });
       mockFs.existsSync.mockReturnValueOnce(false);
@@ -40,7 +40,7 @@ describe('FileLoader.load', () => {
   ])('If file is not valid json (%s)', (invalidFileContents) => {
     it('Will throw InvalidSchemaError', async () => {
       const loader = new FileLoader({
-        path: 'some/path',
+        path: 'some/path.json',
         logger: createMockLogger()
       });
       mockFs.existsSync.mockReturnValueOnce(true);
@@ -52,7 +52,7 @@ describe('FileLoader.load', () => {
   describe('If * requested', () => {
     it('Will resolve the entire config files contents', async () => {
       const loader = new FileLoader({
-        path: 'some/path',
+        path: 'some/path.json',
         logger: createMockLogger()
       });
   
@@ -69,11 +69,11 @@ describe('FileLoader.load', () => {
     let loader: FileLoader;
     beforeEach(() => {
       loader = new FileLoader({
-        path: 'some/path',
+        path: 'some/path.json',
         logger: createMockLogger()
       });
       mockFs.existsSync.mockReturnValueOnce(true);
-        mockFs.readFileSync.mockReturnValueOnce('{"key": "value","hello": "world"}');
+      mockFs.readFileSync.mockReturnValueOnce('{"key": "value","hello": "world"}');
     })
     describe('And it does not exist', () => {
       it('Will throw a KeyLoadingError', async () => {
@@ -87,5 +87,32 @@ describe('FileLoader.load', () => {
     });
   });
 
-  // TODO: TESTS ON FILE PATH RESOLUTION
+  describe('If the file path is relative', () => {
+    it('Will look for the file relative to the current working directory', async () => {
+      const loader = new FileLoader({
+        path: 'some/path.json',
+        logger: createMockLogger()
+      });
+
+      mockFs.existsSync.mockReturnValueOnce(true);
+      mockFs.readFileSync.mockReturnValueOnce('{}');
+      await loader.load('*');
+      expect(mockFs.existsSync).toHaveBeenCalledWith(process.cwd() + '/' + 'some/path.json');
+      expect(mockFs.readFileSync).toHaveBeenCalledWith(process.cwd() + '/' + 'some/path.json');
+    });
+  });
+  describe('If the file path is absolute', () => {
+    it('Will use that absolute path for the file lookup', async () => {
+      const loader = new FileLoader({
+        path: '/some/absolute/path.json',
+        logger: createMockLogger()
+      });
+
+      mockFs.existsSync.mockReturnValueOnce(true);
+      mockFs.readFileSync.mockReturnValueOnce('{}');
+      await loader.load('*');
+      expect(mockFs.existsSync).toHaveBeenCalledWith('/some/absolute/path.json');
+      expect(mockFs.readFileSync).toHaveBeenCalledWith('/some/absolute/path.json');
+    });
+  });
 });

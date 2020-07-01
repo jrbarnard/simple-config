@@ -1,4 +1,5 @@
 import * as fs from 'fs';
+import * as path from 'path';
 import { ILoader, ILogger, IObject, Loaders, Options } from '../types';
 import { KeyLoadingError, FileNotFoundError, InvalidSchemaError } from '../errors';
 
@@ -20,45 +21,32 @@ export class FileLoader implements ILoader<any | IObject> {
   }
 
   /**
-   * Get the current working directory
-   */
-  private getCwd() {
-    return process.cwd();
-  }
-
-  /**
-   * Get the full file path
-   */
-  private getFullFilePath() {
-    return [this.getCwd(), this.path].join('/');
-  }
-
-  /**
    * Load the config file
    */
   private loadFile(): IObject {
-    // TODO: CHANGE PATH RESOLUTION TO SUPPORT RELATIVE / NON CWD PATHS
-    const path = this.getFullFilePath();
-    this.logger.debug(`Loading file: ${path}`);
+    const filePath = path.resolve(this.path);
+    this.logger.debug(`Loading file: ${filePath}`);
 
-    const exists = fs.existsSync(path);
+    const exists = fs.existsSync(filePath);
 
     if (!exists) {
-      throw new FileNotFoundError(path);
+      throw new FileNotFoundError(filePath);
     }
 
     let config: IObject;
     try {
       this.logger.debug(`Decoding config file`);
-      config = JSON.parse(fs.readFileSync(path).toString());
+      config = JSON.parse(fs.readFileSync(filePath).toString());
 
       if (typeof config !== 'object' || config === null || Array.isArray(config)) {
         throw new Error();
       }
     } catch (e) {
-      this.logger.error(`Failed to load and parse config file: ${path}: ${e.message}`);
+      this.logger.error(`Failed to load and parse config file: ${filePath}: ${e.message}`);
       throw new InvalidSchemaError('The config file is invalid');
     }
+
+    this.logger.debug(`Loaded file contents: ${JSON.stringify(config)}`);
     
     return config;
   }
