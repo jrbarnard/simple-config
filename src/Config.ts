@@ -1,14 +1,15 @@
-import { Options, ILogger, ConfigSchema, IFlattenedKeys, Source, ILoader, IResolver } from './types';
-import { ConfigLoader } from './utils/ConfigLoader';
+import merge from 'lodash.merge';
 import { Logger } from './utils/Logger';
-import { UndefinedConfigKeyError, FileNotFoundError } from './errors';
-import { ConfigValidator } from './utils/ConfigValidator';
 import { ConfigValue } from './ConfigValue';
 import { ConfigStore } from './ConfigStore';
 import { Resolver } from './utils/Resolver';
-import { EnvironmentLoader } from './loaders/EnvironmentLoader';
 import { SSMLoader } from './loaders/SSMLoader';
 import { FileLoader } from './loaders/FileLoader';
+import { UndefinedConfigKeyError } from './errors';
+import { ConfigLoader } from './utils/ConfigLoader';
+import { ConfigValidator } from './utils/ConfigValidator';
+import { EnvironmentLoader } from './loaders/EnvironmentLoader';
+import { Options, ILogger, ConfigSchema, IFlattenedKeys, Source, ILoader, IResolver } from './types';
 
 export class Config<T> {
   private configLoader: ConfigLoader;
@@ -47,7 +48,12 @@ export class Config<T> {
       logger: this.logger.spawn('ConfigValidator'),
     });
     
-    this.schema = schema;
+    this.schema = merge({
+      loaders: {
+        env: {},
+        ssm: {},
+      }
+    }, schema);
     this.generateStore(this.schema);
     this.flattenedKeys = this.flattenKeys(this.store);
   }
@@ -57,7 +63,7 @@ export class Config<T> {
    * @param store
    * @param parent
    */
-  private flattenKeys(store: ConfigStore, parent: string = ''): IFlattenedKeys {
+  private flattenKeys(store: ConfigStore, parent = ''): IFlattenedKeys {
     let keys: IFlattenedKeys = {};
     store.each((key: string, value: ConfigStore | ConfigValue) => {
       const namespacedKey = !parent ? key : `${parent}.${key}`;
@@ -82,12 +88,8 @@ export class Config<T> {
    * @param config 
    * @param keyNamespace 
    */
-  private setConfig<C>(config: Partial<C>, keyNamespace: string = '') {
+  private setConfig<C>(config: Partial<C>, keyNamespace = '') {
     for (const key in config) {
-      if (!config.hasOwnProperty(key)) {
-        continue;
-      }
-
       const namespacedKey = !keyNamespace ? key : `${keyNamespace}.${key}`;
 
       // If not nested, set, otherwise call recursively to set
@@ -123,7 +125,7 @@ export class Config<T> {
    * The config directory to load them from
    * @param configDirectory
    */
-  public async loadConfigFile(file: string, configDirectory: string = 'config'): Promise<Config<T>> {
+  public async loadConfigFile(file: string, configDirectory = 'config'): Promise<Config<T>> {
     this.logger.debug(`Loading environment config`);
 
     this.addLoader(Source.EnvFile, new FileLoader({
@@ -155,11 +157,6 @@ export class Config<T> {
    */
   public async get<C>(key: string, defaultValue?: C): Promise<C> {
     if (!this.has(key)) {
-      // TODO: Should still throw
-      if (defaultValue !== undefined) {
-        return defaultValue;
-      }
-
       throw new UndefinedConfigKeyError(key);
     }
 
@@ -187,7 +184,7 @@ export class Config<T> {
         store = parentStore;
       }
 
-      return store.getValueForKey(lastSegment);
+      return store.getValueForKey(lastSegment, defaultValue);
     }
 
     return flattenedKeyValue.getValue();

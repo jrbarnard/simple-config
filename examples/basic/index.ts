@@ -36,13 +36,13 @@ const schema: ConfigSchema<IBasicConfigSchema> = {
   await config.loadConfigFile('testing', [__dirname, 'config'].join('/'));
 
   try {
-    await config.get('services.google.apiKey')
+    await config.get<string>('services.google.apiKey')
   } catch (e) {
     // Will throw a KeyLoadingError as there is no default
     console.log(e.name);
   }
 
   process.env.GOOGLE_API_KEY = '123456789';
-  console.log(await config.get('services.google.apiKey')); // 123456789
-  console.log(await config.get('featureFlags.newForm')) // true;
+  console.log(await config.get<string>('services.google.apiKey')); // 123456789
+  console.log(await config.get<boolean>('featureFlags.newForm')) // true;
 })();

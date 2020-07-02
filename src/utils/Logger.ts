@@ -1,10 +1,5 @@
 import { ILogger, Options, LogLevel } from '../types';
 
-// tslint:disable: no-console
-
-/**
- * TODO: Improve to handle logging a full error if we can
- */
 export class Logger implements ILogger {
   private namespace: string;
   private logLevel: LogLevel;

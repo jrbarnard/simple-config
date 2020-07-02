@@ -128,10 +128,6 @@ export class ConfigValidator implements IConfigValidator {
   private getSchemaProperties<T>(schema: ConfigSchema<T>): ISchemaProperties {
     const properties: ISchemaProperties = {};
     for (const key in schema) {
-      if (!schema.hasOwnProperty(key)) {
-        continue;
-      }
-
       properties[key] = this.getSchemaProperty(schema[key]);
     }
 
@@ -149,7 +145,7 @@ export class ConfigValidator implements IConfigValidator {
         return String(value);
       case Number:
         return Number(value);
-      case Boolean:
+      case Boolean: {
         const flaseyValues: any[] = [
           'false',
           '0',
@@ -157,6 +153,7 @@ export class ConfigValidator implements IConfigValidator {
           false
         ];
         return !flaseyValues.includes(value);
+      }
     }
 
     return value;

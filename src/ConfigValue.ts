@@ -1,18 +1,18 @@
 export class ConfigValue {
   private value: any = undefined;
-  private isSet: boolean = false;
-  private isDefaultSet: boolean = false;
+  private isSet = false;
+  private isDefaultSet = false;
 
-  public getValue(): any {
+  public getValue<T>(): T {
     return this.value;
   }
 
-  public setValue(value: any) {
+  public setValue<T>(value: T): void {
     this.isSet = true;
     this.value = value;
   }
 
-  public setDefault(value: any) {
+  public setDefault<T>(value: T): void {
     this.isDefaultSet = true;
     this.value = value;
   }

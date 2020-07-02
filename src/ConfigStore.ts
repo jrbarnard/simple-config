@@ -1,9 +1,9 @@
-import { ConfigSchema, ILogger, Options, IConfigLoader, IConfigSchemaObj, IConfigValidator } from './types';
 import { ConfigValue } from './ConfigValue';
-import { InvalidSchemaError, KeyLoadingError } from './errors';
 import { isConfigSchemaObject } from './utils/guards';
+import { InvalidSchemaError, KeyLoadingError } from './errors';
+import { ConfigSchema, ILogger, Options, IConfigLoader, IConfigValidator, IConfigSchemaObj } from './types';
 
-interface IConfigStoreStore {
+interface IInternalStore {
   [k: string]: ConfigStore | ConfigValue;
 };
 
@@ -12,7 +12,7 @@ interface IMappedStore {
 };
 
 export class ConfigStore {
-  private store: IConfigStoreStore = {};
+  private store: IInternalStore = {};
   private schema: ConfigSchema<any>;
   private logger: ILogger;
   private loader: IConfigLoader;
@@ -31,13 +31,9 @@ export class ConfigStore {
    * @param schema 
    */
   private generateFromSchema(schema: ConfigSchema<any>) {
-    const store: any = {};
+    const store: IInternalStore = {};
 
     for (const key in schema) {
-      if (!schema.hasOwnProperty(key)) {
-        continue;
-      }
-
       let value: ConfigValue | ConfigStore;
       if (isConfigSchemaObject(schema[key])) {
         value = new ConfigValue();
@@ -67,10 +63,6 @@ export class ConfigStore {
   public async getValue(): Promise<any> {
     const mapped: IMappedStore = {};
     for (const key in this.store) {
-      if (!this.store.hasOwnProperty(key)) {
-        continue;
-      }
-
       mapped[key] = await this.getValueForKey(key);
     }
 
@@ -79,10 +71,10 @@ export class ConfigStore {
 
   /**
    * Get the value for a specific key in the store
-   * Load if is not already
+   * Load it if it is not already
    * @param key 
    */
-  public async getValueForKey<C>(key: string): Promise<C> {
+  public async getValueForKey<C>(key: string, defaultValue?: C): Promise<C> {
     if (!(key in this.store)) {
       throw new Error(`Key (${key}) does not exist in store`);
     }
@@ -105,10 +97,26 @@ export class ConfigStore {
     const src = keySchema._source;
     const srcKey = keySchema._key ?? key;
 
+    // Helper methods to retrieve either the runtime or config value default
+    const hasDefault = (cv: ConfigValue): boolean => {
+      if (defaultValue !== undefined || cv.hasDefaultBeenSet()) {
+        return true;
+      }
+
+      return false;
+    };
+    const getDefault = (cv: ConfigValue): C => {
+      if (defaultValue !== undefined) {
+        return defaultValue;
+      }
+
+      return cv.getValue<C>();
+    };
+
     if (!src || !srcKey) {
-      if (configValue.hasDefaultBeenSet()) {
+      if (hasDefault(configValue)) {
         this.logger.debug('No source or key, loading default');
-        return configValue.getValue();
+        return getDefault(configValue);
       }
 
       throw new InvalidSchemaError(
@@ -116,22 +124,27 @@ export class ConfigStore {
       );
     }
 
-    let value: any;
+    let value: C;
     try {
       // Load, validate and set the value from the external source
       value = await this.loader.loadFromSource(src, srcKey);
+
       this.logger.debug(`Loaded key (${srcKey}) from source`);
+
       value = this.validator.cast(keySchema, value);
+
       await this.validator.validate(keySchema, value);
     } catch (e) {
-      // If we couldn't load the key, fallback gracefully to the default
-      if (!(e instanceof KeyLoadingError) || !configValue.hasDefaultBeenSet()) {
-        throw e;
+      // If we failed to load the value but have a default either runtime or in the value
+      // then pass it back
+      if (e instanceof KeyLoadingError && hasDefault(configValue)) {
+        return getDefault(configValue);
       }
 
-      value = configValue.getValue();
+      throw e;
     }
 
+    // With the correctly loaded value, set it into the config value 
     configValue.setValue(value);
     return value;
   }
@@ -140,12 +153,8 @@ export class ConfigStore {
    * Run a callback on each entry in the store
    * @param callback 
    */
-  public each(callback: (key: string, value: ConfigStore | ConfigValue) => void) {
+  public each(callback: (key: string, value: ConfigStore | ConfigValue) => void): void {
     for (const key in this.store) {
-      if (!this.store.hasOwnProperty(key)) {
-        continue;
-      }
-
       callback(key, this.store[key]);
     }
   }

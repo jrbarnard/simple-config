@@ -1,6 +1,8 @@
 import { KeyLoadingError } from '../errors';
 import { ILoader, ILogger, Options, Loaders } from '../types';
 
+/* eslint @typescript-eslint/no-var-requires: 0 */
+
 /**
  * TODO: Replace with codependency?
  * TODO: Decryption
@@ -42,6 +44,7 @@ export class SSMLoader implements ILoader {
         // WithDecryption: true || false
       }).promise();
     } catch (e) {
+      // TODO: CHANGE THE ERROR THROWN DEPENDING IF NOT SET, OR SOME OTHER ERROR
       this.logger.error(`Failed to load key (${key}) from SSM: ${e.message}`);
       throw new KeyLoadingError(key, this);
     }

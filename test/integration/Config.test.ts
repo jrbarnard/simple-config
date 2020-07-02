@@ -109,7 +109,7 @@ class CustomLoader implements ILoader<any> {
 const configDirectory = 'test/integration/config';
 
 const logger = new Logger({
-  level: LogLevel.System
+  level: LogLevel.Error
 });
 
 describe('Config', () => {
@@ -149,7 +149,7 @@ describe('Config', () => {
       });
     });
   });
-  describe('When value not set and does not meet validation', () => {
+  describe('When value not set and does not have a default', () => {
     beforeEach(() => {
       delete process.env.DB_PASSWORD;
     });
