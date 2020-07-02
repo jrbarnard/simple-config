@@ -4,7 +4,6 @@ import { ILoader, ILogger, Options, Loaders } from '../types';
 /* eslint @typescript-eslint/no-var-requires: 0 */
 
 /**
- * TODO: Replace with codependency?
  * TODO: Decryption
  */
 export class SSMLoader implements ILoader {
@@ -29,11 +28,11 @@ export class SSMLoader implements ILoader {
         region: this.region,
       });
     } catch (e) {
-      throw new Error('You must install the aws-sdk in order to use the SSMLoader: npm i --save aws-sdk');
+      throw new Error('You must install the aws-sdk in order to use the SSMLoader: npm i aws-sdk');
     }
     return;
   }
-  
+
   async load(key: string): Promise<any> {
     this.loadSdk();
 
