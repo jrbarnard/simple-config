@@ -62,7 +62,7 @@ export class ConfigStore implements IHasValue {
     return mapped as C;
   }
 
-  public setValue(value: any): this {
+  public setValue(_value: any): this {
     this.isSet = true;
     return this;
   }
