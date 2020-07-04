@@ -3,7 +3,6 @@ import { IConfigSchemaObj, IHasValue } from './types';
 export class ConfigValue implements IHasValue {
   private value: any = undefined;
   private isSet = false;
-  private defaultValue: any = undefined;
   private isDefaultSet = false;
 
   constructor(private schema: IConfigSchemaObj<any>) {
@@ -16,12 +15,8 @@ export class ConfigValue implements IHasValue {
     return this.schema;
   }
 
-  public getValue<T>(defaultValue?: T): T {
-    if (this.hasBeenSet()) {
-      return this.value;
-    }
-
-    return defaultValue ? defaultValue : this.getDefault();
+  public getValue<T>(): T {
+    return this.value;
   }
 
   public setValue<T>(value: T): this {
@@ -30,13 +25,9 @@ export class ConfigValue implements IHasValue {
     return this;
   }
 
-  public getDefault<T>(): T {
-    return this.defaultValue;
-  }
-
   public setDefault<T>(value: T): this {
     this.isDefaultSet = true;
-    this.defaultValue = value;
+    this.value = value;
     return this;
   }
 

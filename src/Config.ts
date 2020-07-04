@@ -5,7 +5,7 @@ import { ConfigStore } from './ConfigStore';
 import { Resolver } from './utils/Resolver';
 import { SSMLoader } from './loaders/SSMLoader';
 import { FileLoader } from './loaders/FileLoader';
-import { UndefinedConfigKeyError } from './errors';
+import { UndefinedConfigKeyError, ValueNotSetError } from './errors';
 import { ConfigLoader } from './utils/ConfigLoader';
 import { ConfigValidator } from './utils/ConfigValidator';
 import { EnvironmentLoader } from './loaders/EnvironmentLoader';
@@ -161,17 +161,30 @@ export class Config<T> {
     }
 
     // TODO: Wrap in try catch and pass back default if set
-    const flattenedKeyValue = this.flattenedKeys[key];
+    const valueStore = this.flattenedKeys[key];
 
-    // TODO: WORK OUT DEFAULT HANDLING
-    if (flattenedKeyValue.hasBeenSet()) {
-      return flattenedKeyValue.getValue() as C;
+    // Attempt to the load into the value store if not yet loaded / cached
+    if (!valueStore.hasBeenSet()) {
+      await this.configLoader.load(key, valueStore);
     }
 
-    await this.configLoader.load(key, flattenedKeyValue);
+    if (valueStore.hasBeenSet()) {
+      return valueStore.getValue() as C;
+    }
 
-    // TODO: DEFAULT STUFF
-    return flattenedKeyValue.getValue(defaultValue) as C;
+    // Handle defaults if no value set during loading
+    this.logger.debug(`There is no set value for ${key}, retrieving default`);
+    if (defaultValue !== undefined) {
+      this.logger.debug(`Returning runtime default: ${defaultValue}`);
+      return defaultValue;
+    }
+
+    if (!(valueStore instanceof ConfigValue) || !valueStore.hasDefaultBeenSet()) {
+      this.logger.debug(`No value set for ${key} and no default provided`);
+      throw new ValueNotSetError(`No value set for ${key} and no default provided`);
+    }
+
+    return valueStore.getValue();
   }
 
   /**

@@ -43,8 +43,7 @@ export class ConfigLoader implements IConfigLoader {
         await this.validator.validate(keySchema, value);
         config.setValue(value);
       } catch (e) {
-        // If the loader couldn't find the value and we have a default then fine.
-        if (e instanceof ValueNotSetError && config.hasDefaultBeenSet()) {
+        if (e instanceof ValueNotSetError) {
           this.logger.debug(`No value set in loader for (${srcKey})`);
           return config;
         }
@@ -53,6 +52,7 @@ export class ConfigLoader implements IConfigLoader {
       }
     } else {
       await config.eachAsync(this.load.bind(this));
+      config.setValue({});
     }
 
     return config;

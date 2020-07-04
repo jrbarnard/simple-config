@@ -14,16 +14,13 @@ export class ConfigStore implements IHasValue {
   private store: IInternalStore = {};
   private schema: ConfigSchema<any>;
   private logger: ILogger;
-  private value: IMappedStore | undefined = undefined;
+  // private value: IMappedStore | undefined = undefined;
+  private isSet = false;
 
   constructor(options: Options.IConfigStoreOptions) {
     this.logger = options.logger;
     this.schema = options.schema;
     this.generateFromSchema(this.schema);
-  }
-  
-  public hasBeenSet(): boolean {
-    return false; // TODO: IMPLEMENT CACHING
   }
 
   /**
@@ -51,25 +48,26 @@ export class ConfigStore implements IHasValue {
     this.store = store;
   }
 
-  /**
-   * Gets all the store values into an object literal
-   * If some of the values haven't yet been retrieved it will retrieve them
-   * Will get recursively
-   */
-  public getValue(defaultValue: IMappedStore = {}): IMappedStore {
-    const mapped: IMappedStore = {};
-    for (const key in this.store) {
-      mapped[key] = this.store[key].getValue(key in defaultValue ? defaultValue[key] : undefined);
-    }
-
-    return mapped;
+  public hasBeenSet(): boolean {
+    return this.isSet;
   }
 
-  public setValue(value: IMappedStore): this {
-    this.value = value;
+  public getValue<C>(): C | undefined {
+    // TODO: HANDLE CACHED
+    const mapped: IMappedStore = {};
+    for (const key in this.store) {
+      mapped[key] = this.store[key].getValue();
+    }
+
+    return mapped as C;
+  }
+
+  public setValue(value: any): this {
+    this.isSet = true;
     return this;
   }
 
+  // TODO: JOIN TOGETHER
   /**
    * Run a callback on each entry in the store
    * @param callback 
@@ -80,6 +78,10 @@ export class ConfigStore implements IHasValue {
     }
   }
 
+  /**
+   * Run an async callback on each entry in the store
+   * @param callback 
+   */
   public eachAsync<R>(callback: (key: string, value: ConfigStore | ConfigValue) => Promise<R>): Promise<R[]> {
     const promises: Promise<R>[] = [];
     for (const key in this.store) {
