@@ -1,6 +1,7 @@
+import { ValueBase } from './ValueBase';
 import { ConfigValue } from './ConfigValue';
 import { isConfigSchemaObject } from './utils/guards';
-import { ConfigSchema, ILogger, Options, IHasValue } from './types';
+import { ConfigSchema, ILogger, Options } from './types';
 
 interface IInternalStore {
   [k: string]: ConfigStore | ConfigValue;
@@ -10,14 +11,13 @@ interface IMappedStore {
   [k: string]: any;
 };
 
-export class ConfigStore implements IHasValue {
+export class ConfigStore extends ValueBase {
   private store: IInternalStore = {};
   private schema: ConfigSchema<any>;
   private logger: ILogger;
-  // private value: IMappedStore | undefined = undefined;
-  private isSet = false;
 
   constructor(options: Options.IConfigStoreOptions) {
+    super();
     this.logger = options.logger;
     this.schema = options.schema;
     this.generateFromSchema(this.schema);
@@ -48,10 +48,6 @@ export class ConfigStore implements IHasValue {
     this.store = store;
   }
 
-  public hasBeenSet(): boolean {
-    return this.isSet;
-  }
-
   public getValue<C>(): C | undefined {
     // TODO: HANDLE CACHED
     const mapped: IMappedStore = {};
@@ -60,11 +56,6 @@ export class ConfigStore implements IHasValue {
     }
 
     return mapped as C;
-  }
-
-  public setValue(_value: any): this {
-    this.isSet = true;
-    return this;
   }
 
   /**

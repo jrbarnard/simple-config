@@ -8,7 +8,6 @@ export { Source } from './Source';
 export { IFlattenedKeys } from './IFlattenedKeys';
 export { IObject } from './IObject';
 export { IConfigRetriever } from './IConfigRetriever';
-export { IHasValue } from './IHasValue';
 
 import * as Options from './options';
 export { Options };

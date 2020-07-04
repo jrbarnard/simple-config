@@ -1,11 +1,11 @@
-import { IConfigSchemaObj, IHasValue } from './types';
+import { IConfigSchemaObj } from './types';
+import { ValueBase } from './ValueBase';
 
-export class ConfigValue implements IHasValue {
-  private value: any = undefined;
-  private isSet = false;
+export class ConfigValue extends ValueBase {
   private isDefaultSet = false;
 
   constructor(private schema: IConfigSchemaObj<any>) {
+    super();
     if ('_default' in this.schema) {
       this.setDefault(this.schema._default);
     }
@@ -15,24 +15,10 @@ export class ConfigValue implements IHasValue {
     return this.schema;
   }
 
-  public getValue<T>(): T {
-    return this.value;
-  }
-
-  public setValue<T>(value: T): this {
-    this.isSet = true;
-    this.value = value;
-    return this;
-  }
-
   public setDefault<T>(value: T): this {
     this.isDefaultSet = true;
     this.value = value;
     return this;
-  }
-
-  public hasBeenSet(): boolean {
-    return this.isSet;
   }
 
   /**
