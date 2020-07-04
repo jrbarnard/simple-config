@@ -35,7 +35,7 @@ export class FileLoader implements ILoader<any | IObject> {
       config = JSON.parse(fs.readFileSync(filePath).toString());
 
       if (typeof config !== 'object' || config === null || Array.isArray(config)) {
-        throw new Error('Config file not value object');
+        throw new Error('Config file is not an object');
       }
     } catch (e) {
       this.logger.error(`Failed to load and parse config file: ${filePath}: ${e.message}`);

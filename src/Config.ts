@@ -94,7 +94,11 @@ export class Config<T> {
       const namespacedKey = !keyNamespace ? key : `${keyNamespace}.${key}`;
 
       // If not nested, set, otherwise call recursively to set
-      const flattenedValue = this.flattenedKeys[namespacedKey]
+      const flattenedValue = this.flattenedKeys[namespacedKey];
+      if (flattenedValue === undefined) {
+        throw new Error(`Failed to set config for key: "${namespacedKey}", does not exist in schema`);
+      }
+
       if (flattenedValue instanceof ConfigValue) {
         flattenedValue.setDefault(config[key]);
       } else {

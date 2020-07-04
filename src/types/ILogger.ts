@@ -25,5 +25,6 @@ export enum LogLevel {
   System = 0,
   Debug = 10,
   Info = 20,
-  Error = 30
+  Error = 30,
+  Silent = 100
 }
