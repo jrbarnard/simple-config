@@ -1,15 +1,16 @@
 // tslint:disable: no-console
 import { ConfigSchema, Config, Source } from '../../src';
 
+interface IServicesSchema {
+  google: {
+    apiKey: string;
+  };
+}
 interface IBasicConfigSchema {
-  services: {
-    google: {
-      apiKey: string,
-    },
-  },
+  services: IServicesSchema;
   featureFlags: {
     newForm: boolean;
-  }
+  };
 };
 
 const schema: ConfigSchema<IBasicConfigSchema> = {
@@ -43,6 +44,7 @@ const schema: ConfigSchema<IBasicConfigSchema> = {
   }
 
   process.env.GOOGLE_API_KEY = '123456789';
-  console.log(await config.get<string>('services.google.apiKey')); // 123456789
+  console.log(await config.get<IServicesSchema>('services')); // { google: { apiKey: '123456789' } }
+  console.log(await config.get<string>('services.google.apiKey')); // '123456789'
   console.log(await config.get<boolean>('featureFlags.newForm')) // true;
 })();
