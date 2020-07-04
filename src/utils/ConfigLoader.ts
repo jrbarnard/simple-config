@@ -51,7 +51,7 @@ export class ConfigLoader implements IConfigLoader {
         throw e;
       }
     } else {
-      await config.eachAsync(this.load.bind(this));
+      await config.each(this.load.bind(this));
       config.setValue({});
     }
 

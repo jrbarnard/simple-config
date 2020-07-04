@@ -67,27 +67,26 @@ export class ConfigStore implements IHasValue {
     return this;
   }
 
-  // TODO: JOIN TOGETHER
   /**
    * Run a callback on each entry in the store
    * @param callback 
    */
-  public each(callback: (key: string, value: ConfigStore | ConfigValue) => void): void {
-    for (const key in this.store) {
-      callback(key, this.store[key]);
-    }
-  }
-
-  /**
-   * Run an async callback on each entry in the store
-   * @param callback 
-   */
-  public eachAsync<R>(callback: (key: string, value: ConfigStore | ConfigValue) => Promise<R>): Promise<R[]> {
+  public each<R>(callback: (key: string, value: ConfigStore | ConfigValue) => Promise<R> | R): Promise<R[]> | R[] {
     const promises: Promise<R>[] = [];
+    const results: R[] = [];
     for (const key in this.store) {
-      promises.push(callback(key, this.store[key]));
+      const result = callback(key, this.store[key]);
+      if (result instanceof Promise) {
+        promises.push(result);
+      } else {
+        results.push(result);
+      }
     }
 
-    return Promise.all(promises);
+    if (promises.length) {
+      return Promise.all(promises);
+    }
+
+    return results;
   }
 }
