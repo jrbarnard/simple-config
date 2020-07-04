@@ -1,7 +1,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import { ILoader, ILogger, IObject, Loaders, Options } from '../types';
-import { KeyLoadingError, FileNotFoundError, InvalidSchemaError } from '../errors';
+import { FileNotFoundError, InvalidSchemaError, ValueNotSetError } from '../errors';
 
 /**
  * Load values from an environment file
@@ -35,7 +35,7 @@ export class FileLoader implements ILoader<any | IObject> {
       config = JSON.parse(fs.readFileSync(filePath).toString());
 
       if (typeof config !== 'object' || config === null || Array.isArray(config)) {
-        throw new Error();
+        throw new Error('Config file not value object');
       }
     } catch (e) {
       this.logger.error(`Failed to load and parse config file: ${filePath}: ${e.message}`);
@@ -73,7 +73,7 @@ export class FileLoader implements ILoader<any | IObject> {
     }
 
     if (!(key in this.loaded)) {
-      throw new KeyLoadingError(key, this, `No key in config file: ${this.path}`);
+      throw new ValueNotSetError(key, this, `No key in config file: ${this.path}`);
     }
 
     return this.loaded[key];

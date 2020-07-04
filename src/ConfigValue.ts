@@ -1,20 +1,43 @@
-export class ConfigValue {
+import { IConfigSchemaObj, IHasValue } from './types';
+
+export class ConfigValue implements IHasValue {
   private value: any = undefined;
   private isSet = false;
+  private defaultValue: any = undefined;
   private isDefaultSet = false;
 
-  public getValue<T>(): T {
-    return this.value;
+  constructor(private schema: IConfigSchemaObj<any>) {
+    if ('_default' in this.schema) {
+      this.setDefault(this.schema._default);
+    }
   }
 
-  public setValue<T>(value: T): void {
+  public getSchema(): IConfigSchemaObj<any> {
+    return this.schema;
+  }
+
+  public getValue<T>(defaultValue?: T): T {
+    if (this.hasBeenSet()) {
+      return this.value;
+    }
+
+    return defaultValue ? defaultValue : this.getDefault();
+  }
+
+  public setValue<T>(value: T): this {
     this.isSet = true;
     this.value = value;
+    return this;
   }
 
-  public setDefault<T>(value: T): void {
+  public getDefault<T>(): T {
+    return this.defaultValue;
+  }
+
+  public setDefault<T>(value: T): this {
     this.isDefaultSet = true;
-    this.value = value;
+    this.defaultValue = value;
+    return this;
   }
 
   public hasBeenSet(): boolean {

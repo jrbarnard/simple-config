@@ -3,7 +3,7 @@ import { createMockLogger } from '../testHelpers/mockLogger';
 
 jest.mock('fs');
 import fs from 'fs';
-import { FileNotFoundError, InvalidSchemaError, KeyLoadingError } from '../../../src';
+import { FileNotFoundError, InvalidSchemaError, ValueNotSetError } from '../../../src';
 const mockFs = fs as jest.Mocked<any>;
 
 describe('FileLoader.load', () => {
@@ -76,8 +76,8 @@ describe('FileLoader.load', () => {
       mockFs.readFileSync.mockReturnValueOnce('{"key": "value","hello": "world"}');
     })
     describe('And it does not exist', () => {
-      it('Will throw a KeyLoadingError', async () => {
-        await expect(loader.load('nope')).rejects.toThrow(KeyLoadingError)
+      it('Will throw a ValueNotSetError', async () => {
+        await expect(loader.load('nope')).rejects.toThrow(ValueNotSetError)
       });
     });
     describe('And it does exist', () => {

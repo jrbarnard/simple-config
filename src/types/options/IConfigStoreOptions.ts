@@ -1,10 +1,6 @@
-import { IExpectsLoggerOptions } from './IExpectsLoggerOptions';
 import { ConfigSchema } from '../ConfigSchema';
-import { IConfigLoader } from '../IConfigLoader';
-import { IConfigValidator } from '../IConfigValidator';
+import { IExpectsLoggerOptions } from './IExpectsLoggerOptions';
 
 export interface IConfigStoreOptions extends IExpectsLoggerOptions {
   schema: ConfigSchema<any>;
-  loader: IConfigLoader;
-  validator: IConfigValidator;
 };

@@ -1,6 +1,6 @@
 import { Config } from '../../src/Config';
 import { ConfigSchema, Source, ILoader, LogLevel } from '../../src/types';
-import { KeyLoadingError, SchemaValidationError } from '../../src/errors';
+import { SchemaValidationError, ValueNotSetError } from '../../src/errors';
 import { Logger } from '../../src/utils/Logger';
 
 interface ITestConfigSchema {
@@ -159,7 +159,7 @@ describe('Config', () => {
       });
       // No config file loaded
 
-      await expect(config.get('db.password')).rejects.toThrow(KeyLoadingError);
+      await expect(config.get('db.password')).rejects.toThrow(ValueNotSetError);
     });
   });
 

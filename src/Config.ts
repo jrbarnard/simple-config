@@ -40,12 +40,13 @@ export class Config<T> {
         return this.get(`loaders.${loader}`, {})
       },
     });
-    this.configLoader = new ConfigLoader({
-      logger: this.logger.spawn('ConfigLoader'),
-      loaderResolver: this.loaderResolver
-    });
     this.configValidator = new ConfigValidator({
       logger: this.logger.spawn('ConfigValidator'),
+    });
+    this.configLoader = new ConfigLoader({
+      logger: this.logger.spawn('ConfigLoader'),
+      loaderResolver: this.loaderResolver,
+      validator: this.configValidator
     });
     
     this.schema = merge({
@@ -109,9 +110,7 @@ export class Config<T> {
   private generateStore(schema: ConfigSchema<T>): void {
     this.store = new ConfigStore({
       schema,
-      logger: this.logger.spawn('ConfigStore'),
-      loader: this.configLoader,
-      validator: this.configValidator
+      logger: this.logger.spawn('ConfigStore')
     });
   }
 
@@ -156,6 +155,7 @@ export class Config<T> {
    * @param key 
    */
   public async get<C>(key: string, defaultValue?: C): Promise<C> {
+    // Config requested is not defined in the schema
     if (!this.has(key)) {
       throw new UndefinedConfigKeyError(key);
     }
@@ -163,31 +163,15 @@ export class Config<T> {
     // TODO: Wrap in try catch and pass back default if set
     const flattenedKeyValue = this.flattenedKeys[key];
 
-    // If we have a config value we need to go one level up to it's store
-    // This is because it's store knows how to resolve it, it can't resolve itself
-    if (flattenedKeyValue instanceof ConfigValue) {
-      const segments = key.split('.');
-      const lastSegment = segments.pop();
-
-      // If we don't have a last segment then the parent store is the root one
-      let store: ConfigStore;
-      if (segments.length === 0) {
-        store = this.store;
-      } else {
-        const parentKey = segments.join('.');
-        const parentStore = this.flattenedKeys[parentKey];
-
-        if (!(parentStore instanceof ConfigStore)) {
-          this.logger.error(`Failure to get parent store under key - ${parentKey}`);
-          throw new Error(`Failure to get parent store under key - ${parentKey}`);
-        }
-        store = parentStore;
-      }
-
-      return store.getValueForKey(lastSegment, defaultValue);
+    // TODO: WORK OUT DEFAULT HANDLING
+    if (flattenedKeyValue.hasBeenSet()) {
+      return flattenedKeyValue.getValue() as C;
     }
 
-    return flattenedKeyValue.getValue();
+    await this.configLoader.load(key, flattenedKeyValue);
+
+    // TODO: DEFAULT STUFF
+    return flattenedKeyValue.getValue(defaultValue) as C;
   }
 
   /**

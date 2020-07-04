@@ -1,5 +1,5 @@
 import { EnvironmentLoader } from '../../../src/loaders/EnvironmentLoader';
-import { KeyLoadingError } from '../../../src/errors';
+import { ValueNotSetError } from '../../../src/errors';
 
 describe('EnvironmentLoader.load', () => {
   let loader: EnvironmentLoader;
@@ -11,7 +11,7 @@ describe('EnvironmentLoader.load', () => {
       delete process.env.TEST_NO_VALUE;
     });
     it('Will throw the error', async () => {
-      await expect(loader.load('TEST_NO_VALUE')).rejects.toThrow(KeyLoadingError);
+      await expect(loader.load('TEST_NO_VALUE')).rejects.toThrow(ValueNotSetError);
     });
   });
   describe('When a key is present in environment', () => {
