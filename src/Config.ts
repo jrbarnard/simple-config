@@ -164,7 +164,6 @@ export class Config<T> {
       throw new UndefinedConfigKeyError(key);
     }
 
-    // TODO: Wrap in try catch and pass back default if set
     const valueStore = this.flattenedKeys[key];
 
     // Attempt to the load into the value store if not yet loaded / cached
@@ -173,7 +172,7 @@ export class Config<T> {
     }
 
     if (valueStore.hasBeenSet()) {
-      return valueStore.getValue() as C;
+      return valueStore.getValue();
     }
 
     // Handle defaults if no value set during loading
@@ -197,7 +196,18 @@ export class Config<T> {
    * @param key 
    * @param loader 
    */
-  public addLoader(key: string, loader: ILoader): void {
+  public addLoader(key: string, loader: ILoader): this {
     this.loaderResolver.add(key, loader);
+    return this;
+  }
+
+  /**
+   * Clear the stored config values
+   */
+  public clear(): this {
+    for (const key in this.flattenedKeys) {
+      this.flattenedKeys[key].unset();
+    }
+    return this;
   }
 }

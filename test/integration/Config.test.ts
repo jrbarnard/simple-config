@@ -253,3 +253,43 @@ describe('Config', () => {
     });
   });
 });
+
+describe('Config caching', () => {
+  let config: Config<ITestConfigSchema>;
+  beforeEach(() => {
+    config = new Config<ITestConfigSchema>(schema, {
+      logger
+    });
+  });
+  describe('If I request a config value', () => {
+    const mockLoad = jest.fn();
+    beforeEach(async () => {
+      config.addLoader('custom', new class implements ILoader {
+        load = mockLoad;
+      });
+
+      mockLoad.mockResolvedValue(11111);
+      await expect(config.get('customLoaded.aNumber')).resolves.toBe(11111);
+    });
+    afterEach(() => {
+      mockLoad.mockReset();
+    });
+    describe('And then re request it', () => {
+      it('Will not load again', async () => {
+        expect(mockLoad).toHaveBeenCalledTimes(1);
+        await expect(config.get('customLoaded.aNumber')).resolves.toBe(11111);
+        expect(mockLoad).toHaveBeenCalledTimes(1);
+        expect(mockLoad).toHaveBeenCalledWith('CUSTOM_A_NUMBER_KEY');
+      });
+    });
+    describe('And then clear the cache before re requesting', () => {
+      it('Will load again', async () => {
+        expect(mockLoad).toHaveBeenCalledTimes(1);
+        config.clear();
+        await expect(config.get('customLoaded.aNumber')).resolves.toBe(11111);
+        expect(mockLoad).toHaveBeenCalledTimes(2);
+        expect(mockLoad).toHaveBeenCalledWith('CUSTOM_A_NUMBER_KEY');
+      });
+    });
+  });
+});
