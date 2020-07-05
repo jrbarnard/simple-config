@@ -3,13 +3,14 @@ import { Logger } from './utils/Logger';
 import { ConfigValue } from './ConfigValue';
 import { ConfigStore } from './ConfigStore';
 import { Resolver } from './utils/Resolver';
+import { isConfigSchema } from './utils/guards';
 import { SSMLoader } from './loaders/SSMLoader';
 import { FileLoader } from './loaders/FileLoader';
-import { UndefinedConfigKeyError, ValueNotSetError } from './errors';
 import { ConfigLoader } from './utils/ConfigLoader';
 import { ConfigValidator } from './utils/ConfigValidator';
 import { EnvironmentLoader } from './loaders/EnvironmentLoader';
-import { Options, ILogger, ConfigSchema, IFlattenedKeys, Source, ILoader, IResolver } from './types';
+import { UndefinedConfigKeyError, ValueNotSetError } from './errors';
+import { Options, ILogger, ConfigSchema, IFlattenedKeys, Source, ILoader, IResolver, ChainableSchema, ChainableSchemaValue } from './types';
 
 export class Config<T> {
   private configLoader: ConfigLoader;
@@ -37,7 +38,7 @@ export class Config<T> {
       },
       // Pass through a retrieval function so the loader can resolve it's own config
       configRetriever: async (loader: string) => {
-        return this.get(`loaders.${loader}`, {})
+        return this.get(`loaders.${loader}`, {});
       },
     });
     this.configValidator = new ConfigValidator({
@@ -48,7 +49,7 @@ export class Config<T> {
       loaderResolver: this.loaderResolver,
       validator: this.configValidator
     });
-    
+
     this.schema = merge({
       loaders: {
         env: {},
@@ -155,14 +156,22 @@ export class Config<T> {
   }
 
   /**
+   * Validate config requested is defined in the schema
+   * @param key 
+   */
+  private validateHas(key: string): true {
+    if (!this.has(key)) {
+      throw new UndefinedConfigKeyError(key);
+    }
+    return true;
+  }
+
+  /**
    * Get the value for the schema
    * @param key 
    */
   public async get<C>(key: string, defaultValue?: C): Promise<C> {
-    // Config requested is not defined in the schema
-    if (!this.has(key)) {
-      throw new UndefinedConfigKeyError(key);
-    }
+    this.validateHas(key);
 
     const valueStore = this.flattenedKeys[key];
 
@@ -209,5 +218,55 @@ export class Config<T> {
       this.flattenedKeys[key].unset();
     }
     return this;
+  }
+
+  /**
+   * Build a chainable config getter
+   * NB: The types used & the casting is required due to the use of Object.defineProperties etc.
+   * This allows for users to get type hinting when using
+   */
+  public get chain(): ChainableSchema<T> {
+    /* eslint @typescript-eslint/no-this-alias: 0 */
+    /* eslint @typescript-eslint/no-empty-function: 0 */
+    this.logger.debug('Starting a config chain');
+    const config = this;
+    const Chain = function () { } as unknown as ChainableSchema<T>;
+
+    const buildChainItem = <CS, P extends keyof CS>(key: P, obj: ConfigSchema<CS>): ChainableSchemaValue<CS[P]> => {
+      return {
+        get() {
+          if (!this._chain) {
+            this._chain = [];
+          }
+  
+          const chainer = () => {
+            return config.get<CS[P]>(this._chain.join('.'));
+          };
+  
+          // If nested continue the chain
+          const objValue = obj[key];
+          if (isConfigSchema(objValue)) {
+            Object.defineProperties(chainer, buildChain(objValue));
+          }
+  
+          // Pass the chain down
+          this._chain.push(key);
+          chainer._chain = this._chain;
+  
+          return chainer;
+        }
+      } as ChainableSchemaValue<CS[P]>;
+    };
+    const buildChain = <CS>(obj: ConfigSchema<CS>): ChainableSchema<CS> => {
+      const chainable = {} as ChainableSchema<CS>;
+      for (const key in obj) {
+        chainable[key] = buildChainItem(key, obj);
+      }
+      return chainable;
+    };
+
+    Object.defineProperties(Chain, buildChain(this.schema));
+
+    return Chain;
   }
 }

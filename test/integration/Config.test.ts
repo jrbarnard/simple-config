@@ -293,3 +293,32 @@ describe('Config caching', () => {
     });
   });
 });
+
+describe('Config chaining', () => {
+  let config: Config<ITestConfigSchema>;
+  beforeEach(() => {
+    config = new Config<ITestConfigSchema>(schema, {
+      logger
+    });
+  });
+  describe('When requesting single segments', () => {
+    describe('And going to a value and calling promise()', () => {
+      it('Will resolve the value', async () => {
+        await expect(config.chain.db.nested.test()).resolves.toEqual('hello world');
+      });
+    });
+    describe('And going to a store and calling promise()', () => {
+      it('Will resolve the contents of the store', async () => {
+        await config.loadConfigFile('dev', configDirectory);
+        await expect(config.chain.db()).resolves.toEqual({
+          host: 'localhost',
+          password: 'localtesting',
+          port: 1111,
+          nested: {
+            test: 'dev override',
+          },
+        });
+      });
+    });
+  });
+});

@@ -52,7 +52,7 @@ export class ConfigLoader implements IConfigLoader {
       }
     } else {
       await config.each(this.load.bind(this));
-      config.setValue({});
+      config.setValue(config.getValue());
     }
 
     return config;

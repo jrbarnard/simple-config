@@ -33,7 +33,7 @@ const schema: ConfigSchema<IBasicConfigSchema> = {
 
 (async () => {
   // Load a basic config file with just the feature flags
-  const config = new Config<IBasicConfigSchema>(schema);
+  const config = new Config(schema);
   await config.loadConfigFile('testing', [__dirname, 'config'].join('/'));
 
   try {
