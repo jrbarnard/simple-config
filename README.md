@@ -91,6 +91,11 @@ const dbConfig = await config.get('db');
 // Retrieve a single item of config
 const dbPort = await config.get('db.port');
 // 3306
+
+// You can also chain to get the config, this works in the same way as above
+// but you will receive type hints based on the schema you defined:
+const dbPort = await config.chain.db.port(); // 3306
+const db = await config.chain.db(); // { host: '127.0.0.1', port: 3306, user: { password: '123456', name: 'superuser' } }
 ```
 
 ## Roadmap
