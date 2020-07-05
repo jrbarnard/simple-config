@@ -48,8 +48,14 @@ export class ConfigStore extends ValueBase {
     this.store = store;
   }
 
+  /**
+   * Load from cache if can, otherwise recursively get
+   */
   public getValue<C>(): C | undefined {
-    // TODO: HANDLE CACHED
+    if (this.hasBeenSet()) {
+      return this.value;
+    }
+
     const mapped: IMappedStore = {};
     for (const key in this.store) {
       mapped[key] = this.store[key].getValue();
