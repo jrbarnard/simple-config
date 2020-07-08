@@ -230,7 +230,8 @@ export class Config<T> {
     /* eslint @typescript-eslint/no-empty-function: 0 */
     this.logger.debug('Starting a config chain');
     const config = this;
-    const Chain = function () { } as unknown as ChainableSchema<T>;
+
+    const chain = {} as ChainableSchema<T>;
 
     const buildChainItem = <CS, P extends keyof CS>(key: P, obj: ConfigSchema<CS>): ChainableSchemaValue<CS[P]> => {
       return {
@@ -265,8 +266,8 @@ export class Config<T> {
       return chainable;
     };
 
-    Object.defineProperties(Chain, buildChain(this.schema));
+    Object.defineProperties(chain, buildChain(this.schema));
 
-    return Chain;
+    return chain;
   }
 }

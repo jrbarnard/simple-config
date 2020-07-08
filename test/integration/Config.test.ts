@@ -295,13 +295,13 @@ describe('Config caching', () => {
 });
 
 describe('Config chaining', () => {
-  let config: Config<ITestConfigSchema>;
-  beforeEach(() => {
-    config = new Config<ITestConfigSchema>(schema, {
-      logger
-    });
-  });
   describe('When requesting single segments', () => {
+    let config: Config<ITestConfigSchema>;
+    beforeEach(() => {
+      config = new Config<ITestConfigSchema>(schema, {
+        logger
+      });
+    });
     describe('And going to a value and calling promise()', () => {
       it('Will resolve the value', async () => {
         await expect(config.chain.db.nested.test()).resolves.toEqual('hello world');
@@ -319,6 +319,38 @@ describe('Config chaining', () => {
           },
         });
       });
+    });
+  });
+  describe.each([
+    'toString',
+    'get',
+    'name',
+    'caller',
+    'length',
+    'bind',
+    'call',
+    'arguments'
+  ])('When requesting properties that overlap with function prop (%s)', (property) => {
+    it('Will resolve', async () => {
+      const config = new Config<any>({
+        [property]: {
+          nested: {
+            _type: String,
+            _default: 'one'
+          }
+        },
+        nested: {
+          [property]: {
+            _type: String,
+            _default: 'two'
+          }
+        }
+      }, {
+        logger
+      });
+
+      await expect(config.chain[property].nested()).resolves.toEqual('one');
+      await expect(config.chain.nested[property]()).resolves.toEqual('two');
     });
   });
 });

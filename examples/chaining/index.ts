@@ -40,6 +40,6 @@ const schema: ConfigSchema<IChainableConfigSchema> = {
   // Then just call each nested key as a property till you want to retrieve one
   // And call it as a function
   console.log(`a.nested.set.of: ${await config.chain.a.nested.set.of()}`); // 'foo'
-  console.log(`a.nested.set: ${await config.chain.a.nested.set()}`); // { of: 'foo', values: 'bar' }
+  console.log(`a.nested.set: ${JSON.stringify(await config.chain.a.nested.set())}`); // { of: 'foo', values: 'bar' }
   console.log(`a.nested.number: ${await config.chain.a.nested.number()}`); // 19191
 })();
