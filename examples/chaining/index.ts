@@ -1,4 +1,4 @@
-import { ConfigSchema, Config, ChainedConfig } from '../../src';
+import { ConfigSchema, Config } from '../../src';
 
 interface INestedConfig {
   set: {
