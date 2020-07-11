@@ -1,7 +1,7 @@
 {
-  "name": "conf",
+  "name": "@jrbarnard/config",
   "version": "1.0.0",
-  "description": "",
+  "description": "A library that provides a flexible config store that allows for loading from multiple sources",
   "main": "build/index.js",
   "keywords": [
     "config",
@@ -11,6 +11,8 @@
     "simple",
     "typescript"
   ],
+  "author": "https://github.com/jrbarnard",
+  "url" : "https://github.com/jrbarnard/simple-config/issues",
   "scripts": {
     "build": "npm run clean && mkdir build && tsc -p tsconfig.build.json",
     "clean": "rm -rf build",
@@ -19,9 +21,7 @@
     "test:unit": "jest --testMatch **/test/unit/**/*.test.ts --",
     "test:integration": "jest --testMatch **/test/integration/**/*.test.ts --"
   },
-  "author": "",
   "license": "ISC",
-  "private": true,
   "dependencies": {
     "ajv": "^6.12.2",
     "lodash.merge": "^4.6.2"

@@ -1,4 +1,9 @@
-# Simple Config
+# @jrbarnard/config
+
+This library provides a config store that can be instantiated with an expected 'schema', and then will load config variables on demand
+when requested.
+It's primarily built around the concept of loaders, where a loader is responsible for retrieving config from some store.
+E.g an environment variable loader, json file loader and AWS Secrets Manager loader are provided out of the box.
 
 ## Features
 
@@ -13,7 +18,7 @@
 
 1. Define your schema
 ```
-import { ConfigSchema, Source } from '@jrbarnard/simple-config';
+import { ConfigSchema, Source } from '@jrbarnard/config';
 
 // Typescript interface to describe the structure and types of the config variables
 interface IDbConfig {
@@ -44,8 +49,8 @@ const schema: ConfigSchema<IAppConfig> = {
     port: {
       _type: Number,
       // Will load from the built in environment variable loader
+      // process.env.DB_PORT, if not present will default to 3306
       _source: Source.Environment,
-      // process.env.DB_PORT
       _key: 'DB_PORT',
       _default: 3306
     },
@@ -90,13 +95,14 @@ const dbConfig = await config.get('db');
 // { host: '127.0.0.1', port: 3306, user: { password: '123456', name: 'superuser' } }
 
 // Retrieve a single item of config
+// Note we've already loaded db, so this would just retrieve from the cache
 const dbPort = await config.get('db.port');
 // 3306
 
 // You can also chain to get the config, this works in the same way as above
-// but you will receive type hints based on the schema you defined:
-const dbPort = await config.chain.db.port(); // 3306
-const db = await config.chain.db(); // { host: '127.0.0.1', port: 3306, user: { password: '123456', name: 'superuser' } }
+// but you will receive type hints based on the interface you defined:
+const dbPort: number = await config.chain.db.port(); // 3306
+const db: IDbConfig = await config.chain.db(); // { host: '127.0.0.1', port: 3306, user: { password: '123456', name: 'superuser' } }
 ```
 
 A major benefit of the chaining feature is to pass around sub groups of config before actually retrieving them.
