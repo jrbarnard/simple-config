@@ -5,7 +5,7 @@ export type Chainer<T> = {
     (): Promise<T>;
   };
 };
-export type ChainableSchemaValue<T> = ChainableSchema<T> & Chainer<T>
+export type ChainedConfig<T> = ChainableSchema<T> & Chainer<T>
 export type ChainableSchema<T> = {
-  [P in keyof T]: ChainableSchemaValue<T[P]>;
+  [P in keyof T]: ChainedConfig<T[P]>;
 };

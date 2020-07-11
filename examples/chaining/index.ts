@@ -1,14 +1,15 @@
-import { ConfigSchema, Config } from '../../src';
+import { ConfigSchema, Config, ChainedConfig } from '../../src';
 
+interface INestedConfig {
+  set: {
+    of: string;
+    values: string;
+  };
+  number: number;
+};
 interface IChainableConfigSchema {
   a: {
-    nested: {
-      set: {
-        of: string;
-        values: string;
-      };
-      number: number;
-    };
+    nested: INestedConfig;
   };
 };
 

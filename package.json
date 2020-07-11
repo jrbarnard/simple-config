@@ -1,8 +1,16 @@
 {
-  "name": "@jrbarnard/simple-config",
+  "name": "conf",
   "version": "1.0.0",
   "description": "",
   "main": "build/index.js",
+  "keywords": [
+    "config",
+    "lazy-load",
+    "ssm",
+    "environment",
+    "simple",
+    "typescript"
+  ],
   "scripts": {
     "build": "npm run clean && mkdir build && tsc -p tsconfig.build.json",
     "clean": "rm -rf build",

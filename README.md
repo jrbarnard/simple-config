@@ -16,20 +16,21 @@
 import { ConfigSchema, Source } from '@jrbarnard/simple-config';
 
 // Typescript interface to describe the structure and types of the config variables
+interface IDbConfig {
+  host: string;
+  port: number;
+  user: {
+    name: string;
+    password: string;
+  };
+};
 interface IAppConfig {
-  db: {
-    host: string;
-    port: number;
-    user: {
-      name: string;
-      password: string;
-    }
-  },
+  db: IDbConfig;
   services: {
     googleMaps: {
       apiKey: string;
-    },
-  }
+    };
+  };
 };
 
 // Config schema definition, to define how the config should be loaded
@@ -98,10 +99,26 @@ const dbPort = await config.chain.db.port(); // 3306
 const db = await config.chain.db(); // { host: '127.0.0.1', port: 3306, user: { password: '123456', name: 'superuser' } }
 ```
 
+A major benefit of the chaining feature is to pass around sub groups of config before actually retrieving them.
+
+E.g
+```
+const dbConfig = config.chain.db;
+
+const db = new MyDataStore(dbConfig);
+
+// In MyDataStore you can now extract the config when you are ready and it will lazy load.
+class MyDataStore {
+  constructor(private config: ChainedConfig<IDbConfig>) {}
+  public async query(...) 
+    const db = connectDatabase(this.config.host(), this.config.port(), this.config.user());
+    return db.query('...');
+  }
+}
+```
+
 ## Roadmap
 
-- Casting data on way in from external sources based on schema
-- Tests & Clean up
 - Improve SSM loader to decrypt values
 - Events (hook into set up & see when config variables change / are requested)
 - External caching?

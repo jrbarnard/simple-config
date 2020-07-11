@@ -10,7 +10,7 @@ import { ConfigLoader } from './utils/ConfigLoader';
 import { ConfigValidator } from './utils/ConfigValidator';
 import { EnvironmentLoader } from './loaders/EnvironmentLoader';
 import { UndefinedConfigKeyError, ValueNotSetError } from './errors';
-import { Options, ILogger, ConfigSchema, IFlattenedKeys, Source, ILoader, IResolver, ChainableSchema, ChainableSchemaValue } from './types';
+import { Options, ILogger, ConfigSchema, IFlattenedKeys, Source, ILoader, IResolver, ChainableSchema, ChainedConfig } from './types';
 
 export class Config<T> {
   private configLoader: ConfigLoader;
@@ -233,7 +233,7 @@ export class Config<T> {
 
     const chain = {} as ChainableSchema<T>;
 
-    const buildChainItem = <CS, P extends keyof CS>(key: P, obj: ConfigSchema<CS>): ChainableSchemaValue<CS[P]> => {
+    const buildChainItem = <CS, P extends keyof CS>(key: P, obj: ConfigSchema<CS>): ChainedConfig<CS[P]> => {
       return {
         get() {
           if (!this._chain) {
@@ -256,7 +256,7 @@ export class Config<T> {
   
           return chainer;
         }
-      } as ChainableSchemaValue<CS[P]>;
+      } as ChainedConfig<CS[P]>;
     };
     const buildChain = <CS>(obj: ConfigSchema<CS>): ChainableSchema<CS> => {
       const chainable = {} as ChainableSchema<CS>;
