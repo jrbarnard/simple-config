@@ -3,7 +3,7 @@ import { createMockLogger } from '../testHelpers/mockLogger';
 
 jest.mock('fs');
 import fs from 'fs';
-import { FileNotFoundError, InvalidSchemaError, ValueNotSetError } from '../../../src';
+import { FileNotFoundError, InvalidSchemaError, ValueNotSetError } from '../../../src/errors';
 const mockFs = fs as jest.Mocked<any>;
 
 describe('FileLoader.load', () => {

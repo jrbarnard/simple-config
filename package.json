@@ -15,7 +15,7 @@
   "author": "https://github.com/jrbarnard",
   "url" : "https://github.com/jrbarnard/simple-config/issues",
   "scripts": {
-    "prepublish": "npm run lint && npm run test && npm run build",
+    "prepublishOnly": "npm run lint && npm run test && npm run build",
     "build": "npm run clean && mkdir build && tsc -p tsconfig.build.json",
     "clean": "rm -rf build",
     "lint": "eslint . --ext .ts",

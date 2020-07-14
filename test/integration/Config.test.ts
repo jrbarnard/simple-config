@@ -1,7 +1,5 @@
-import { Config } from '../../src/Config';
-import { Logger } from '../../src/utils/Logger';
-import { ConfigSchema, Source, ILoader, LogLevel } from '../../src/types';
-import { SchemaValidationError, ValueNotSetError, FileNotFoundError, InvalidSchemaError } from '../../src/errors';
+import { Config, Logger, ConfigSchema, Source, ILoader, LogLevel, Errors } from '../../src';
+const { SchemaValidationError, ValueNotSetError, FileNotFoundError, InvalidSchemaError } = Errors;
 
 interface ITestConfigSchema {
   loaders: {
