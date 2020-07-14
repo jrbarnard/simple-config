@@ -1,5 +1,7 @@
 # @jrbarnard/config
 
+![Build](https://github.com/jrbarnard/simple-config/workflows/Build/badge.svg)
+
 This library provides a config store that can be instantiated with an expected 'schema', and then will load config variables on demand
 when requested.
 It's primarily built around the concept of loaders, where a loader is responsible for retrieving config from some store.
