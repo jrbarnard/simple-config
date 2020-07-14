@@ -1,7 +1,6 @@
 import { ValueBase } from './ValueBase';
 import { IConfigSchemaObj } from './types';
 
-// TODO: REFACTOR OUT?
 export class ConfigValue extends ValueBase {
   constructor(private schema: IConfigSchemaObj<any>) {
     super();

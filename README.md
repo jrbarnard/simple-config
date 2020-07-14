@@ -126,5 +126,4 @@ class MyDataStore {
 ## Roadmap
 
 - Improve SSM loader to decrypt values
-- Events (hook into set up & see when config variables change / are requested)
-- External caching?
+- Improve caching

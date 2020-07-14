@@ -10,22 +10,17 @@ import { ConfigLoader } from './utils/ConfigLoader';
 import { ConfigValidator } from './utils/ConfigValidator';
 import { EnvironmentLoader } from './loaders/EnvironmentLoader';
 import { UndefinedConfigKeyError, ValueNotSetError } from './errors';
-import { Options, ILogger, ConfigSchema, IFlattenedKeys, Source, ILoader, IResolver, ChainableSchema, ChainedConfig } from './types';
+import { Options, ILogger, ConfigSchema, IInternalStore, Source, ILoader, IResolver, ChainableSchema, ChainedConfig } from './types';
 
 export class Config<T> {
   private configLoader: ConfigLoader;
   private configValidator: ConfigValidator;
   private logger: ILogger;
   private schema: ConfigSchema<T>;
-  private flattenedKeys: IFlattenedKeys;
-  private store!: ConfigStore;
+  private flattenedKeys: IInternalStore;
+  private store: ConfigStore;
   private loaderResolver: IResolver<ILoader>;
 
-  /**
-   * 
-   * @param schema 
-   * @param options 
-   */
   constructor(schema: ConfigSchema<T>, options: Options.IConfigOptions = {}) {
     this.logger = options.logger ?? new Logger();
 
@@ -56,7 +51,10 @@ export class Config<T> {
         ssm: {},
       }
     }, schema);
-    this.generateStore(this.schema);
+    this.store = new ConfigStore({
+      schema: this.schema,
+      logger: this.logger.spawn('ConfigStore')
+    });
     this.flattenedKeys = this.flattenKeys(this.store);
   }
 
@@ -65,8 +63,8 @@ export class Config<T> {
    * @param store
    * @param parent
    */
-  private flattenKeys(store: ConfigStore, parent = ''): IFlattenedKeys {
-    let keys: IFlattenedKeys = {};
+  private flattenKeys(store: ConfigStore, parent = ''): IInternalStore {
+    let keys: IInternalStore = {};
     store.each((key: string, value: ConfigStore | ConfigValue) => {
       const namespacedKey = !parent ? key : `${parent}.${key}`;
       keys[namespacedKey] = value;
@@ -106,17 +104,6 @@ export class Config<T> {
         this.setConfig(config[key], namespacedKey);
       }
     }
-  }
-
-  /**
-   * Generate a store tree from the passed schema
-   * @param schema 
-   */
-  private generateStore(schema: ConfigSchema<T>): void {
-    this.store = new ConfigStore({
-      schema,
-      logger: this.logger.spawn('ConfigStore')
-    });
   }
 
   /**

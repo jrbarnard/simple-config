@@ -1,3 +1,6 @@
+/**
+ * The abstract of a class that will hold a config value
+ */
 export abstract class ValueBase {
   protected isSet = false;
   protected value: any = undefined;

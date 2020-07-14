@@ -1,6 +1,5 @@
-import { IResolver, Options, ILogger, IConfigRetriever } from '../types';
+import { IResolver, Options, ILogger, IConfigRetriever, IResolvableConstructors, ResolvableConstructor } from '../types';
 import { InvalidResolvableError } from '../errors';
-import { IResolvableConstructors, ResolvableConstructor } from '../types/IResolver';
 
 /**
  * Class to resolve classes, either from constructors (and inject config)

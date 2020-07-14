@@ -1,8 +1,7 @@
-import { Options, ILogger, ConfigSchema, IConfigSchemaObj, IConfigValidator } from '../types';
 import Ajv, { ErrorObject, SchemaValidateFunction } from 'ajv';
 import { SchemaValidationError, InvalidSchemaError } from '../errors';
 import { isConfigSchemaObject } from '../utils/guards';
-import { ConfigSchemaValue } from '../types/ConfigSchema';
+import { Options, ILogger, ConfigSchema, IConfigSchemaObj, ConfigSchemaValue, IConfigValidator } from '../types';
 
 interface ISchemaProperty {
   type: string;

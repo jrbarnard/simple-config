@@ -4,9 +4,9 @@ export * from './ConfigChain';
 export { IConfigValidator } from './IConfigValidator';
 export { IConfigLoader } from './IConfigLoader';
 export { ILoader } from './ILoader';
-export { IResolver } from './IResolver';
+export { IResolver, IResolvableConstructors, ResolvableConstructor } from './IResolver';
 export { Source } from './Source';
-export { IFlattenedKeys } from './IFlattenedKeys';
+export { IInternalStore } from './IInternalStore';
 export { IObject } from './IObject';
 export { IConfigRetriever } from './IConfigRetriever';
 

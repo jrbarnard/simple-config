@@ -1,15 +1,7 @@
 import { ValueBase } from './ValueBase';
 import { ConfigValue } from './ConfigValue';
 import { isConfigSchemaObject } from './utils/guards';
-import { ConfigSchema, ILogger, Options } from './types';
-
-interface IInternalStore {
-  [k: string]: ConfigStore | ConfigValue;
-};
-
-interface IMappedStore {
-  [k: string]: any;
-};
+import { ConfigSchema, ILogger, Options, IObject, IInternalStore } from './types';
 
 export class ConfigStore extends ValueBase {
   private store: IInternalStore = {};
@@ -56,7 +48,7 @@ export class ConfigStore extends ValueBase {
       return this.value;
     }
 
-    const mapped: IMappedStore = {};
+    const mapped: IObject = {};
     for (const key in this.store) {
       mapped[key] = this.store[key].getValue();
     }
