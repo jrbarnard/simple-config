@@ -19,7 +19,7 @@ E.g an environment variable loader, json file loader and AWS Secrets Manager loa
 ## Usage
 
 1. Define your schema
-```
+```typescript
 import { ConfigSchema, Source } from '@jrbarnard/config';
 
 // Typescript interface to describe the structure and types of the config variables
@@ -84,14 +84,14 @@ const schema: ConfigSchema<IAppConfig> = {
 
 ```
 2. Load your schema into a config object
-```
+```typescript
 const config = new Config<IAppConfig>(schema);
 
 // Optionally load a config file (can be useful for local development / a set of defaults per environment)
 await config.loadConfigFile(process.env.NODE_ENV);
 ```
 3. Use the config
-```
+```typescript
 // Retrieve a group of config
 const dbConfig = await config.get('db');
 // { host: '127.0.0.1', port: 3306, user: { password: '123456', name: 'superuser' } }
@@ -107,10 +107,8 @@ const dbPort: number = await config.chain.db.port(); // 3306
 const db: IDbConfig = await config.chain.db(); // { host: '127.0.0.1', port: 3306, user: { password: '123456', name: 'superuser' } }
 ```
 
-A major benefit of the chaining feature is to pass around sub groups of config before actually retrieving them.
-
-E.g
-```
+A major benefit of the chaining feature is to pass around sub groups of config before actually retrieving them:
+```typescript
 const dbConfig = config.chain.db;
 
 const db = new MyDataStore(dbConfig);
