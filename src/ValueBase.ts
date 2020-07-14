@@ -1,17 +1,17 @@
 /**
  * The abstract of a class that will hold a config value
  */
-export abstract class ValueBase {
+export abstract class ValueBase<T> {
   protected isSet = false;
-  protected value: any = undefined;
-  protected defaultValue: any = undefined;
+  protected value: T | undefined = undefined;
+  protected defaultValue: T | undefined = undefined;
   protected isDefaultSet = false;
 
-  public getValue<T>(): T {
+  public getValue(): T | undefined {
     return this.hasBeenSet() ? this.value : this.getDefaultValue();
   }
 
-  public setValue<T>(value: T): this {
+  public setValue(value: T): this {
     this.isSet = true;
     this.value = value;
     return this;
@@ -21,13 +21,13 @@ export abstract class ValueBase {
     return this.isSet;
   }
 
-  public setDefault<T>(value: T): this {
+  public setDefault(value: T): this {
     this.isDefaultSet = true;
     this.defaultValue = value;
     return this;
   }
 
-  public getDefaultValue<T>(): T {
+  public getDefaultValue(): T | undefined {
     return this.defaultValue;
   }
 

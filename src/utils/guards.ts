@@ -1,4 +1,4 @@
-import { ConfigSchemaValue, IConfigSchemaObj, ConfigSchema } from '../types/ConfigSchema';
+import { ConfigSchemaValue, IConfigSchemaObj, ConfigSchema } from '../types';
 
 /**
  * Type guard to work out if it's a config schema object

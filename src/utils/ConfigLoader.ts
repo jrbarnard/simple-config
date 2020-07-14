@@ -14,7 +14,7 @@ export class ConfigLoader implements IConfigLoader {
     this.validator = options.validator;
   }
 
-  public async load(key: string, config: ConfigValue | ConfigStore): Promise<ConfigValue | ConfigStore> {
+  public async load<T>(key: string, config: ConfigValue<T> | ConfigStore<T>): Promise<ConfigValue<T> | ConfigStore<T>> {
     if (config instanceof ConfigValue) {
       const keySchema = config.getSchema();
       const src = keySchema._source;

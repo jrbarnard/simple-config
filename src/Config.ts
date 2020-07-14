@@ -10,15 +10,15 @@ import { ConfigLoader } from './utils/ConfigLoader';
 import { ConfigValidator } from './utils/ConfigValidator';
 import { EnvironmentLoader } from './loaders/EnvironmentLoader';
 import { UndefinedConfigKeyError, ValueNotSetError } from './errors';
-import { Options, ILogger, ConfigSchema, IInternalStore, Source, ILoader, IResolver, ChainableSchema, ChainedConfig } from './types';
+import { Options, ILogger, ConfigSchema, IFlattenedKeys, Source, ILoader, IResolver, ChainableSchema, ChainedConfig } from './types';
 
 export class Config<T> {
   private configLoader: ConfigLoader;
   private configValidator: ConfigValidator;
   private logger: ILogger;
   private schema: ConfigSchema<T>;
-  private flattenedKeys: IInternalStore;
-  private store: ConfigStore;
+  private flattenedKeys: IFlattenedKeys;
+  private store: ConfigStore<T>;
   private loaderResolver: IResolver<ILoader>;
 
   constructor(schema: ConfigSchema<T>, options: Options.IConfigOptions = {}) {
@@ -63,9 +63,9 @@ export class Config<T> {
    * @param store
    * @param parent
    */
-  private flattenKeys(store: ConfigStore, parent = ''): IInternalStore {
-    let keys: IInternalStore = {};
-    store.each((key: string, value: ConfigStore | ConfigValue) => {
+  private flattenKeys<StoreT>(store: ConfigStore<StoreT>, parent = ''): IFlattenedKeys {
+    let keys: IFlattenedKeys = {};
+    store.each((key, value) => {
       const namespacedKey = !parent ? key : `${parent}.${key}`;
       keys[namespacedKey] = value;
 
