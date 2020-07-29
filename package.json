@@ -4,6 +4,7 @@
   "description": "A library that provides a flexible config store that allows for loading from multiple sources",
   "main": "build/index.js",
   "types": "build/index.d.ts",
+  "files": ["build/**/*"],
   "keywords": [
     "config",
     "lazy-load",
@@ -15,13 +16,16 @@
   "author": "https://github.com/jrbarnard",
   "url" : "https://github.com/jrbarnard/simple-config/issues",
   "scripts": {
-    "prepublishOnly": "npm run lint && npm run test && npm run build",
     "build": "npm run clean && mkdir build && tsc -p tsconfig.build.json",
     "clean": "rm -rf build",
     "lint": "eslint . --ext .ts",
     "test": "npm run test:unit && npm run test:integration",
     "test:unit": "jest --testMatch **/test/unit/**/*.test.ts --",
-    "test:integration": "jest --testMatch **/test/integration/**/*.test.ts --"
+    "test:integration": "jest --testMatch **/test/integration/**/*.test.ts --",
+    "prepare" : "npm run build",
+    "prepublishOnly": "npm run lint && npm run test",
+    "preversion" : "npm run lint",
+    "postversion" : "git push && git push --tags"
   },
   "license": "ISC",
   "dependencies": {
