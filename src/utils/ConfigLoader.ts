@@ -34,7 +34,7 @@ export class ConfigLoader implements IConfigLoader {
       try {
         // Load, validate and set the value from the external source
         let value = await this.loadFromSource(src, srcKey);
-  
+
         this.logger.debug(`Loaded key (${srcKey}) from source`);
   
         // TODO: MOVE CASTING LOGIC

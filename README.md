@@ -1,7 +1,7 @@
 # @jrbarnard/config
 
 ![Build](https://github.com/jrbarnard/simple-config/workflows/Build/badge.svg)
-[![npm version](https://badge.fury.io/js/%40jrbarnard%2Fconfig.svg)](https://badge.fury.io/js/%40jrbarnard%2Fconfig)
+![NPM Version](https://badge.fury.io/js/%40jrbarnard%2Fconfig.svg)
 
 This library provides a config store that can be instantiated with an expected 'schema', and then will load config variables on demand
 when requested.

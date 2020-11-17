@@ -43,7 +43,8 @@ const schema: ConfigSchema<ITestConfigSchema> = {
   db: {
     host: {
       _default: 'localhost',
-      _type: String
+      _type: String,
+      _source: Source.Environment,
     },
     password: {
       _type: String,
@@ -116,26 +117,31 @@ const logger = new Logger({
   level: LogLevel.Silent
 });
 
+let config: Config<ITestConfigSchema>;
 describe('Config', () => {
-  describe('When value not set and does not have a default', () => {
-    beforeEach(() => {
-      delete process.env.DB_PASSWORD;
+  beforeEach(() => {
+    delete process.env.DB_PASSWORD;
+    config = new Config<ITestConfigSchema>(schema, {
+      logger
     });
+  });
+  describe('When value not set and does not have a default', () => {
     it('Will throw an error', async () => {
-      const config = new Config<ITestConfigSchema>(schema, {
-        logger
-      });
       await expect(config.get('db.password')).rejects.toThrow(ValueNotSetError);
     });
   });
-  describe('When value not set and does have a default', () => {
-    let config: Config<ITestConfigSchema>;
+  describe('When _key not set', () => {
     beforeEach(() => {
-      delete process.env.DB_PASSWORD;
-      config = new Config<ITestConfigSchema>(schema, {
-        logger
-      });
+      process.env.host = 'thehost';
     });
+    afterEach(() => {
+      delete process.env.host;
+    });
+    it('Will use key of config', async () => {
+      await expect(config.get('db.host')).resolves.toBe('thehost');
+    });
+  });
+  describe('When value not set and does have a default', () => {
     describe('And no runtime default is passed', () => {
       it('Will return the default', async () => {
         await expect(config.get('db.port')).resolves.toEqual(3306);
@@ -149,9 +155,6 @@ describe('Config', () => {
   });
   describe('When value set but does not meet validation', () => {
     it('Will throw an error', async () => {
-      const config = new Config<ITestConfigSchema>(schema, {
-        logger
-      });
       config.addLoader('custom', new CustomLoader());
 
       // Managed to load, but could not cast to number (NaN), so fails validation
@@ -160,9 +163,6 @@ describe('Config', () => {
   });
   describe('When using a custom loader', () => {
     it('Will load from the custom loader', async () => {
-      const config = new Config<ITestConfigSchema>(schema, {
-        logger
-      });
       config.addLoader('custom', new CustomLoader());
   
       await expect(config.get('customLoaded.aValidNumber')).resolves.toEqual(12121212);
@@ -171,9 +171,6 @@ describe('Config', () => {
       ['customLoaded.testString', 'testing'],
       ['customLoaded', {aNumber: 1212, aValidNumber: 9999, testString: 'testing'}]
     ])('Will load from a custom loader that takes a long time', async (requestedKey, value) => {
-      const config = new Config<ITestConfigSchema>(schema, {
-        logger
-      });
       config.addLoader('custom', new class implements ILoader<any> {
         async load(key: string): Promise<any> {
           const values: {[k: string]: any} = {
@@ -193,12 +190,6 @@ describe('Config', () => {
   });
 
   describe('When loading a config file', () => {
-    let config: Config<ITestConfigSchema>;
-    beforeEach(() => {
-      config = new Config<ITestConfigSchema>(schema, {
-        logger
-      });
-    });
     describe('And the file does not exist', () => {
       it('Will throw an error', async () => {
         await expect(config.loadConfigFile('doesnotexist', configDirectory)).rejects.toThrow(FileNotFoundError);

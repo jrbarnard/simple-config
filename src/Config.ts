@@ -164,7 +164,7 @@ export class Config<T> {
 
     // Attempt to the load into the value store if not yet loaded / cached
     if (!valueStore.hasBeenSet()) {
-      await this.configLoader.load(key, valueStore);
+      await this.configLoader.load(key.split('.').pop(), valueStore);
     }
 
     if (valueStore.hasBeenSet()) {
