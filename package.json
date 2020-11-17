@@ -1,6 +1,6 @@
 {
   "name": "@jrbarnard/config",
-  "version": "0.2.2",
+  "version": "0.2.3",
   "description": "A library that provides a flexible config store that allows for loading from multiple sources",
   "main": "build/index.js",
   "types": "build/index.d.ts",
